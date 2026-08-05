@@ -10,6 +10,6 @@ Smoking, we all love lung cancer right?\
 Set a custom bio.\
 Get information about a user from username.\
 Get information about a user from id? No! Shut up!\
-Currency.\
+Currency.
 
 Read `/docs` for more information and how to use.
