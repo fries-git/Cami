@@ -29,7 +29,7 @@ def register():
     
     if len(result) == 0:
         if len(registername) >= 4 and len(registerpassword) >= 4:
-            db.insert({'username': registername, 'password': registerpassword, 'usernum': len(db) + 1, 'bio': 'yo yo yo what it do homie', 'fries': 0, 'cigarettes': 0, 'userid': uid})
+            db.insert({'username': registername, 'password': registerpassword, 'usernum': len(db) + 1, 'bio': 'yo yo yo what it do homie', 'fries': 0, 'userid': uid})
             return uid, 201
         else:
             return "Password/Username too short (4 char minimum)", 403
