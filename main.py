@@ -87,33 +87,6 @@ def user():
     else:
         return "User not found", 404
 
-@app.post("/smoke")
-def smoke():
-    Token = Query()
-    data = request.get_json()
-    token = data.get("token")
-    result = tokendb.search(Token.token == token)
-    if result:
-        uid = validate(token)
-        if uid:
-            User = Query()
-            result = db.search(User.userid == uid)
-            rand = random.randint(1, random.randint(1, 3))
-            smokesleft = result[0]["cigarettes"]
-            if smokesleft > 0:
-                if rand == 1:
-                    return "You start coughing like crazy", 200
-                elif rand == 2:
-                    return "Huh. Aight.", 200
-                elif rand == 3:
-                    return "Man. Awesome", 200
-            else:
-                return "No smokes :(", 404
-        else:
-            return "Couldnt find UID attached to token, report this as a major bug.", 404
-    else:
-        return "Token not found.", 404
-
 @app.post("/changepass")
 def changepass():
     return "Unimplemented", 404
