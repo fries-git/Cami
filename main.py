@@ -6,6 +6,7 @@ import secrets
 from waitress import serve
 import time
 import random
+from helperfuncs import validate
 
 import hashdef as h
 
@@ -74,16 +75,6 @@ def updatebio():
     )
 
     return newbio, 200
-
-@app.post("/validate")
-def validate(token):
-    Token = Query()
-    result = tokendb.search(Token.token == token)
-
-    if result:
-        return result[0]["userid"]
-
-    return None
 
 @app.get("/getuser")
 def getuser():
