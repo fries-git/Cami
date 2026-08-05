@@ -76,8 +76,8 @@ def updatebio():
     else:
         return "Bio too long > (200 chars)", 422
 
-@app.get("/getuser")
-def getuser():
+@app.get("/user")
+def user():
     User = Query()
     userget = request.args.get("user")
     result = db.search(User.username == userget) or db.search(User.userid == userget)
