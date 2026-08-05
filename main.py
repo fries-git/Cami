@@ -85,11 +85,10 @@ def validate(token):
 
     return None
 
-@app.post("/getuser")
+@app.get("/getuser")
 def getuser():
     User = Query()
-    data = request.get_json()
-    userget = data.get("user")
+    userget = request.args.get("user")
     result = db.search(User.username == userget)
     if result:
         userobj = {"bio": result[0]["bio"], "usernum": result[0]["usernum"], "fries": result[0]["fries"]}
