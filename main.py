@@ -10,6 +10,8 @@ from helperfuncs import validate
 
 import hashdef as h
 
+# All in order of when amde
+
 db = TinyDB('users.json')
 tokendb = TinyDB("tokens.json")
 app = Flask(__name__)
@@ -111,6 +113,8 @@ def smoke():
             return "Couldnt find UID attached to token, report this as a major bug.", 404
     else:
         return "Token not found.", 404
+
+@app.post("/changepass")
 
 if __name__ == "__main__":
     serve(app, host="0.0.0.0", port=5000)
