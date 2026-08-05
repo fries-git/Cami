@@ -1,62 +1,89 @@
-from flask import Flask, request, jsonify
-import logging
-import hash as h
+from flask import Flask, request
+from flask_cors import CORS
 from tinydb import TinyDB, Query
 import uuid as u
+import secrets
+from waitress import serve
+import time
+import random
+
+import hashdef as h
 
 db = TinyDB('users.json')
+tokendb = TinyDB("tokens.json")
 app = Flask(__name__)
-
-log = logging.getLogger("werkzeug")
-log.setLevel(logging.ERROR)  # Only show errors
+CORS(app)
 
 @app.post("/register")
 def register():
     data = request.get_json()
     User = Query()
     registername = data.get("username")
-    registerpassword = h.hash(data.get("password"))
+    password = data.get("password")
+    registerpassword = h.hash(password)
     result = db.search(User.username == registername)
     uid = str(u.uuid4())
+    
     if len(result) == 0:
-        db.insert({'username': data.get("username"), 'password': registerpassword, 'usernum': len(db) + 1, 'bio': 'yo yo yo what it do homie', 'fries': 0, 'userid': uid})
-        return uid, 201
+        if len(registername) >= 4 and len(registerpassword) >= 4:
+            db.insert({'username': registername, 'password': registerpassword, 'usernum': len(db) + 1, 'bio': 'yo yo yo what it do homie', 'fries': 0, 'cigarettes': 0, 'userid': uid})
+            return uid, 201
+        else:
+            return "Password/Username too short (4 char minimum)"
     else:
         return "", 409
 
 @app.post("/login")
 def login():
     User = Query()
+    Token = Query()
     data = request.get_json()
 
-    loginname = data.get("username")
-    loginpassword = h.hash(data.get("password"))
+    username = data.get("username")
+    password = data.get("password")
+    result = db.search(User.username == username)
 
-    result = db.search((User.username == loginname) & (User.password == loginpassword))
-
-    if result:
+    if result and h.hash(password):
         userid = result[0]["userid"]
-        return userid, 200
-    else:
-        return "", 404
+        tokendb.remove(Token.userid == userid)
+
+        token = secrets.token_hex(32)
+        unix_time = int(time.time())
+
+        tokendb.insert({"timestamp": unix_time, "token": token, "userid": userid})
+        return token, 200
+
+    return "Username/Password invalid", 401
 
 @app.post("/updatebio")
 def updatebio():
-    User = Query()
     data = request.get_json()
-    uid = data.get("uid")
+
+    token = data.get("token")
+    userid = validate(token)
+
+    if not userid:
+        return "Invalid token", 401
+
     newbio = data.get("newbio")
-    result = db.search((User.userid == uid))
-    print(result)
+
+    User = Query()
+    db.update(
+        {"bio": newbio},
+        User.userid == userid
+    )
+
+    return newbio, 200
+
+@app.post("/validate")
+def validate(token):
+    Token = Query()
+    result = tokendb.search(Token.token == token)
 
     if result:
-        db.update(
-            {"bio": newbio},
-            User.userid == uid
-        )
-        return newbio, 200
-    else:
-        return "", 404
+        return result[0]["userid"]
+
+    return None
 
 @app.post("/getuser")
 def getuser():
@@ -70,5 +97,32 @@ def getuser():
     else:
         return "", 404
 
-    
-app.run()
+@app.post("/smoke")
+def smoke():
+    Token = Query()
+    data = request.get_json()
+    token = data.get("token")
+    result = tokendb.search(Token.token == token)
+    if result:
+        uid = validate(token)
+        if uid:
+            User = Query()
+            result = db.search(User.userid == uid)
+            rand = random.randint(1, random.randint(1, 3))
+            smokesleft = result[0]["cigarettes"]
+            if smokesleft > 0:
+                if rand == 1:
+                    return "You start coughing like crazy", 200
+                elif rand == 2:
+                    return "Huh. Aight.", 200
+                elif rand == 3:
+                    return "Man. Awesome", 200
+            else:
+                return "No smokes :(", 404
+        else:
+            return "", 404
+    else:
+        return "", 404
+
+if __name__ == "__main__":
+    serve(app, host="0.0.0.0", port=5000)

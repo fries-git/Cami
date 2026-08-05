@@ -1,146 +1,313 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Auth Client</title>
-    <style>
-        body {
-            background: #111;
-            color: white;
-            font-family: Arial, sans-serif;
-            max-width: 500px;
-            margin: 40px auto;
-        }
-
-        input, button {
-            width: 100%;
-            padding: 10px;
-            margin: 5px 0;
-            box-sizing: border-box;
-            border-radius: 5px;
-            border: none;
-        }
-
-        input {
-            background: #222;
-            color: white;
-        }
-
-        button {
-            background: #444;
-            color: white;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background: #666;
-        }
-
-        #output {
-            margin-top: 20px;
-            background: #222;
-            padding: 10px;
-            border-radius: 5px;
-            word-break: break-all;
-        }
-    </style>
+<meta charset="UTF-8">
+<title>API Test Client</title>
+<style>
+  :root {
+    --bg: #f4f5f7;
+    --card: #ffffff;
+    --border: #e3e5e9;
+    --text: #1a1b1e;
+    --muted: #6b7280;
+    --accent: #4f46e5;
+    --accent-hover: #4338ca;
+    --ok: #16a34a;
+    --err: #dc2626;
+    --mono-bg: #0f1115;
+    --mono-text: #7ef29c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 32px 20px 60px;
+  }
+  header {
+    margin-bottom: 28px;
+  }
+  header h1 {
+    font-size: 1.6rem;
+    margin: 0 0 4px;
+  }
+  header p {
+    color: var(--muted);
+    margin: 0;
+    font-size: 0.9rem;
+  }
+  .server-bar {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 24px;
+  }
+  .server-bar label {
+    font-size: 0.8rem;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .server-bar input {
+    flex: 1;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+  }
+  @media (max-width: 700px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px 20px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  }
+  .card h2 {
+    font-size: 1rem;
+    margin: 0 0 2px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card .desc {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin: 0 0 12px;
+  }
+  label.field-label {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-top: 10px;
+    margin-bottom: 4px;
+  }
+  input {
+    width: 100%;
+    padding: 8px 10px;
+    font-size: 0.9rem;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    background: #fafafa;
+    color: var(--text);
+  }
+  input:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: #fff;
+  }
+  button {
+    margin-top: 14px;
+    padding: 9px 16px;
+    cursor: pointer;
+    border: none;
+    border-radius: 7px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: background 0.15s ease;
+  }
+  button:hover { background: var(--accent-hover); }
+  button:active { transform: translateY(1px); }
+  .status-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .status-pill {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #eee;
+    color: var(--muted);
+  }
+  .status-pill.ok { background: #dcfce7; color: var(--ok); }
+  .status-pill.err { background: #fee2e2; color: var(--err); }
+  pre {
+    background: var(--mono-bg);
+    color: var(--mono-text);
+    padding: 10px 12px;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-size: 0.8rem;
+    white-space: pre-wrap;
+    word-break: break-all;
+    margin: 8px 0 0;
+    min-height: 1.2em;
+  }
+  .badge {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #fff;
+    background: var(--accent);
+    padding: 2px 6px;
+    border-radius: 5px;
+    font-weight: 700;
+  }
+</style>
 </head>
 <body>
 
-<h1>Auth Client</h1>
+<header>
+  <h1>API Test Client</h1>
+  <p>Manual test console for the user/token Flask server.</p>
+</header>
 
-<h2>Register</h2>
-<input id="regUser" placeholder="Username">
-<input id="regPass" placeholder="Password" type="password">
-<button onclick="register()">Register</button>
+<div class="server-bar">
+  <label for="baseUrl">Base URL</label>
+  <input id="baseUrl" value="http://localhost:5000">
+</div>
 
-<h2>Login</h2>
-<input id="loginUser" placeholder="Username">
-<input id="loginPass" placeholder="Password" type="password">
-<button onclick="login()">Login</button>
+<div class="grid">
 
-<h2>Update Bio</h2>
-<input id="bio" placeholder="New bio">
-<button onclick="updateBio()">Update Bio</button>
+  <div class="card">
+    <h2><span class="badge">POST</span> /register</h2>
+    <p class="desc">Create a new account (4 char minimum for username/password).</p>
+    <label class="field-label">Username</label>
+    <input id="reg-username" placeholder="username">
+    <label class="field-label">Password</label>
+    <input id="reg-password" type="password" placeholder="password">
+    <button type="button" onclick="doRegister()">Register</button>
+    <div class="status-row"><span class="status-pill" id="reg-status">idle</span></div>
+    <pre id="reg-out"></pre>
+  </div>
 
-<div id="output">Not logged in</div>
+  <div class="card">
+    <h2><span class="badge">POST</span> /login</h2>
+    <p class="desc">Returns a token on success. Auto-fills it below.</p>
+    <label class="field-label">Username</label>
+    <input id="login-username" placeholder="username">
+    <label class="field-label">Password</label>
+    <input id="login-password" type="password" placeholder="password">
+    <button type="button" onclick="doLogin()">Login</button>
+    <div class="status-row"><span class="status-pill" id="login-status">idle</span></div>
+    <pre id="login-out"></pre>
+  </div>
+
+  <div class="card">
+    <h2><span class="badge">POST</span> /updatebio</h2>
+    <p class="desc">Requires a valid token.</p>
+    <label class="field-label">Token</label>
+    <input id="bio-token" placeholder="token (auto-filled after login)">
+    <label class="field-label">New Bio</label>
+    <input id="bio-newbio" placeholder="new bio text">
+    <button type="button" onclick="doUpdateBio()">Update Bio</button>
+    <div class="status-row"><span class="status-pill" id="bio-status">idle</span></div>
+    <pre id="bio-out"></pre>
+  </div>
+
+  <div class="card">
+    <h2><span class="badge">POST</span> /getuser</h2>
+    <p class="desc">Look up bio, usernum, and fries by username.</p>
+    <label class="field-label">Username</label>
+    <input id="getuser-username" placeholder="username to look up">
+    <button type="button" onclick="doGetUser()">Get User</button>
+    <div class="status-row"><span class="status-pill" id="getuser-status">idle</span></div>
+    <pre id="getuser-out"></pre>
+  </div>
+
+  <div class="card">
+    <h2><span class="badge">POST</span> /smoke</h2>
+    <p class="desc">Requires a valid token. Uses a cigarette if the user has any left.</p>
+    <label class="field-label">Token</label>
+    <input id="smoke-token" placeholder="token (auto-filled after login)">
+    <button type="button" onclick="doSmoke()">Smoke</button>
+    <div class="status-row"><span class="status-pill" id="smoke-status">idle</span></div>
+    <pre id="smoke-out"></pre>
+  </div>
+
+</div>
 
 <script>
-const API = "http://127.0.0.1:5000";
-
-let userid = localStorage.getItem("userid");
-
-function out(text) {
-    document.getElementById("output").innerText = text;
+function base() {
+  return document.getElementById('baseUrl').value.replace(/\/$/, '');
 }
 
-async function register() {
-    let res = await fetch(API + "/register", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            username: document.getElementById("regUser").value,
-            password: document.getElementById("regPass").value
-        })
-    });
+async function post(path, body) {
+  const res = await fetch(base() + path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  const text = await res.text();
+  let parsed;
+  try { parsed = JSON.parse(text); } catch (e) { parsed = text; }
+  return { status: res.status, body: parsed };
+}
 
-    let text = await res.text();
+function show(prefix, result) {
+  const pill = document.getElementById(prefix + '-status');
+  pill.textContent = 'HTTP ' + result.status;
+  pill.className = 'status-pill ' + (
+    typeof result.status === 'number' && result.status >= 200 && result.status < 300 ? 'ok' : 'err'
+  );
+  document.getElementById(prefix + '-out').textContent =
+    typeof result.body === 'string' ? result.body : JSON.stringify(result.body, null, 2);
+}
 
-    if (res.status === 201) {
-        userid = text;
-        localStorage.setItem("userid", userid);
-        out("Registered!\nUser ID: " + userid);
-    } else {
-        out("Register failed: " + res.status);
+async function doRegister() {
+  const username = document.getElementById('reg-username').value;
+  const password = document.getElementById('reg-password').value;
+  try {
+    show('reg', await post('/register', { username, password }));
+  } catch (e) {
+    show('reg', { status: 'ERR', body: String(e) });
+  }
+}
+
+async function doLogin() {
+  const username = document.getElementById('login-username').value;
+  const password = document.getElementById('login-password').value;
+  try {
+    const result = await post('/login', { username, password });
+    show('login', result);
+    if (result.status === 200 && typeof result.body === 'string') {
+      document.getElementById('bio-token').value = result.body;
+      document.getElementById('smoke-token').value = result.body;
     }
+  } catch (e) {
+    show('login', { status: 'ERR', body: String(e) });
+  }
 }
 
-async function login() {
-    let res = await fetch(API + "/login", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            username: document.getElementById("loginUser").value,
-            password: document.getElementById("loginPass").value
-        })
-    });
-
-    let text = await res.text();
-
-    if (res.status === 200) {
-        userid = text;
-        localStorage.setItem("userid", userid);
-        out("Logged in!\nUser ID: " + userid);
-    } else {
-        out("Login failed: " + res.status);
-    }
+async function doUpdateBio() {
+  const token = document.getElementById('bio-token').value;
+  const newbio = document.getElementById('bio-newbio').value;
+  try {
+    show('bio', await post('/updatebio', { token, newbio }));
+  } catch (e) {
+    show('bio', { status: 'ERR', body: String(e) });
+  }
 }
 
-async function updateBio() {
-    if (!userid) {
-        out("Not logged in");
-        return;
-    }
-
-    let res = await fetch(API + "/updatebio", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            uid: userid,
-            bio: document.getElementById("bio").value
-        })
-    });
-
-    out("Bio update response: " + res.status);
+async function doGetUser() {
+  const user = document.getElementById('getuser-username').value;
+  try {
+    show('getuser', await post('/getuser', { user }));
+  } catch (e) {
+    show('getuser', { status: 'ERR', body: String(e) });
+  }
 }
 
-if (userid) {
-    out("Logged in as:\n" + userid);
+async function doSmoke() {
+  const token = document.getElementById('smoke-token').value;
+  try {
+    show('smoke', await post('/smoke', { token }));
+  } catch (e) {
+    show('smoke', { status: 'ERR', body: String(e) });
+  }
 }
 </script>
 
