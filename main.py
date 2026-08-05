@@ -82,7 +82,7 @@ def getuser():
     userget = request.args.get("user")
     result = db.search(User.username == userget) or db.search(User.userid == userget)
     if result:
-        userobj = {"bio": result[0]["bio"], "usernum": result[0]["usernum"], "fries": result[0]["fries"]}
+        userobj = {"username":result[0]["username"], "userid":result[0]["userid"], "bio": result[0]["bio"], "usernum": result[0]["usernum"], "fries": result[0]["fries"]}
         return userobj, 200
     else:
         return "", 404
