@@ -32,7 +32,7 @@ def register():
         else:
             return "Password/Username too short (4 char minimum)", 403
     else:
-        return "", 409
+        return "Username already in use.", 409
 
 @app.post("/login")
 def login():
@@ -67,14 +67,12 @@ def updatebio():
         return "Invalid token", 401
 
     newbio = data.get("newbio")
-
-    User = Query()
-    db.update(
-        {"bio": newbio},
-        User.userid == userid
-    )
-
-    return newbio, 200
+    if len(newbio) <= 200:
+        User = Query()
+        db.update({"bio": newbio}, User.userid == userid)
+        return newbio, 200
+    else:
+        return "Bio too long > (200 chars)", 422
 
 @app.get("/getuser")
 def getuser():
@@ -85,7 +83,7 @@ def getuser():
         userobj = {"username":result[0]["username"], "userid":result[0]["userid"], "bio": result[0]["bio"], "usernum": result[0]["usernum"], "fries": result[0]["fries"]}
         return userobj, 200
     else:
-        return "", 404
+        return "User not found", 404
 
 @app.post("/smoke")
 def smoke():
@@ -110,9 +108,9 @@ def smoke():
             else:
                 return "No smokes :(", 404
         else:
-            return "", 404
+            return "Couldnt find UID attached to token, report this as a major bug.", 404
     else:
-        return "", 404
+        return "Token not found.", 404
 
 if __name__ == "__main__":
     serve(app, host="0.0.0.0", port=5000)
