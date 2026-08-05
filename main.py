@@ -115,6 +115,8 @@ def smoke():
         return "Token not found.", 404
 
 @app.post("/changepass")
+def changepass():
+    return "Unimplemented", 404
 
 if __name__ == "__main__":
     serve(app, host="0.0.0.0", port=5000)
