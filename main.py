@@ -10,10 +10,10 @@ from helperfuncs import validate
 
 import hashdef as h
 
-# All in order of when amde
+# All in order of when made
 
 db = TinyDB('users.json')
-tokendb = TinyDB("tokens.json")
+
 app = Flask(__name__)
 CORS(app)
 
@@ -46,7 +46,9 @@ def login():
     password = data.get("password")
     result = db.search(User.username == username)
 
-    if result and h.hash(password):
+    tokendb = TinyDB("tokens.json")
+
+    if result and result[0]["password"] == h.hash(password):
         userid = result[0]["userid"]
         tokendb.remove(Token.userid == userid)
 
@@ -89,7 +91,32 @@ def user():
 
 @app.post("/changepass")
 def changepass():
-    return "Unimplemented", 404
+    data = request.get_json()
+    User = Query()
+
+    oldpass = h.hash(data.get("oldpass"))
+    newpass = h.hash(data.get("newpass"))
+    token = request.args.get("token")
+
+    validation = validate(token)
+
+    if validation:
+        result = db.search(User.password == oldpass)
+
+        if result:
+            if len(data.get("newpass")) >= 4:
+                db.update({"password": newpass}, User.password == oldpass)
+                return "", 200
+            else:
+                return "Password too short (4 char minimum)", 403
+        else:
+            return "Old password incorrect", 403
+    else:
+        return "Invalid token", 401
+
+@app.get("/")
+def home():
+    return """Hey! Read <a href="https://github.com/fries-git/Cami/tree/main/docs">the documentation</a> for usage!""", 200
 
 if __name__ == "__main__":
     serve(app, host="0.0.0.0", port=5613)
