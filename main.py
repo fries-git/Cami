@@ -119,7 +119,9 @@ def changepass():
 
 @app.get("/")
 def home():
-    return """Hey! Read <a href="https://github.com/fries-git/Cami/tree/main/docs">the documentation</a> for usage!""", 200
+    return """Hey! This is Cami, and authentication program. Please, read <a href="https://github.com/fries-git/Cami/tree/main/docs">the documentation</a> for usage!""", 200
 
+portuse = 5613
 if __name__ == "__main__":
-    serve(app, host="0.0.0.0", port=5613)
+    serve(app, host="0.0.0.0", port=portuse)
+    print("Running on port ")
