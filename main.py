@@ -26,11 +26,14 @@ def register():
     registerpassword = h.hash(password)
     result = db.search(User.username == registername)
     uid = str(u.uuid4())
-    
+    tokendb = TinyDB("tokens.json")
     if len(result) == 0:
         if len(registername) >= 4 and len(registerpassword) >= 4:
+            token = secrets.token_hex(32)
+            unix_time = int(time.time())
+            tokendb.insert({"timestamp": unix_time, "token": token, "userid": uid})
             db.insert({'username': registername, 'password': registerpassword, 'usernum': len(db) + 1, 'bio': 'yo yo yo what it do homie', 'fries': 0, 'userid': uid})
-            return uid, 201
+            return token, 201
         else:
             return "Password/Username too short (4 char minimum)", 403
     else:
