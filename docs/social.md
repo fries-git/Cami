@@ -16,3 +16,5 @@ To get the 20 after the first 20, `/social?count=20&offset=20`
   
 Then searching. `/social?count=<int>&search=<str>`  
 I don't know yet if I want: Search returns any with the param in username or body, just the body, or different params.  
+  
+Also get a message by id: `/social?id=<str>` (`<str>` being messageid)
