@@ -1,0 +1,18 @@
+# Just kinda planning it out here.
+
+## POST /social  
+Post with `token` and `message`  
+Returns success and message id.  
+Posts the message
+  
+Post with `token`, `messageid`, and `newmessage`  
+Returns success and message id. 
+Edits the message.  
+  
+## GET /social  
+`/social?count=<int>&offset=<int>` - Gives you n posts with n offset up to twenty at a time.  
+So to get 20 latest posts, `/social?count=20&offset=0` or `/social?count=20`  
+To get the 20 after the first 20, `/social?count=20&offset=20`  
+  
+Then searching. `/social?count=<int>&search=<str>`  
+I don't know yet if I want: Search returns any with the param in username or body, just the body, or different params.  
