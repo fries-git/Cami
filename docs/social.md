@@ -1,5 +1,5 @@
 # POST /social  
-Post with `token` and `message`  
+Post with `token` and `message` like: `{"token":"<str>","message":"<str>"}  
 Returns success and message id.  
 Posts the message
   
