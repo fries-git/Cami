@@ -6,7 +6,7 @@ Returns success and message id.
 Posts the message
   
 Post with `token`, `messageid`, and `newmessage` (W.I.P.)  
-Returns success and message id. 
+Returns success and message id.   
 Edits the message.  
   
 ## GET /social  
