@@ -11,4 +11,7 @@ Get information about a user from username.\
 Get information about a user from id.\
 Currency.
 
+W.I.P. Features:
+A light chatting service similar to a stripped down twitter feed.
+
 Read `/docs` for more information and how to use.
