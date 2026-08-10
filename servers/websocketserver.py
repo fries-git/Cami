@@ -3,18 +3,32 @@ from websockets.asyncio.server import serve
 import json
 from helperfuncs import validate, tokentoname
 
-channels = []
+channels = {}
 passwords = []
 
 def addchannel(name, password):
-    channels.append(f"{name}[]")
-    passwords.append(password)
-    print(f"New channel added named: {name} with the password: {password}")
+    channels[name] = []
+    print(f"New channel added named: {name}")
+
+def addtochannel(name, ws)
+    channels[name].append(ws)
 
 async def process(websocket):
     try:
         async for message in websocket:
-            await websocket.send(message)
+            data = json.loads(message)
+            channel = data["channel"]
+            if data and channel:
+                if channel in channels:
+                    for ws in channels[channel]:
+                        await ws.send(message)
+
+    except Exception as e: 
+        print(f"Connection error: {e}") 
+    finally:
+        for clients in channels.values():
+            if websocket in clients: 
+                clients.remove(websocket)
 
 async def main():
     portuse = 5614
@@ -23,5 +37,5 @@ async def main():
     await server.serve_forever()
 
 if __name__ == "__main__":
-    
+    addchannel("general", "")
     asyncio.run(main())
