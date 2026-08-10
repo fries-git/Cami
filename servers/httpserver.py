@@ -212,6 +212,13 @@ def logout():
         return "Logged out", 200
     return "Token not found", 400
 
+@app.get("/users")
+def users():
+    users = db.all()
+    usernames = [user["username"] for user in users]
+
+    return usernames, 200
+
 portuse = 5613
 print(f"Running on port {portuse}")
 
