@@ -18,9 +18,10 @@ async def process(websocket):
 
             token = message.get("token")
             body = message.get("body")
+            channel = message.get("channel")
 
             if validate(token) and body:
-                string = json.dumps({"uid": validate(token), "body": body})
+                string = json.dumps({"uid": validate(token), "body": body, "channel":channel})
                 print(f"User {tokentoname(token)} just sent: {body}")
                 for user in connected:
                     await user.send(string)
