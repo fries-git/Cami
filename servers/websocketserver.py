@@ -15,7 +15,7 @@ async def process(websocket):
             except json.JSONDecodeError:
                 await websocket.send("Invalid JSON")
                 continue
-
+            cmd = message.get("cmd")                    
             token = message.get("token")
             body = message.get("body")
             channel = message.get("channel")

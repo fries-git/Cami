@@ -10,8 +10,9 @@ Set a custom bio.\
 Get information about a user from username.\
 Get information about a user from id.\
 Currency.
-
-W.I.P. Features:
 A light chatting service similar to a stripped down twitter feed.
+
+W.I.P.  
+Live chatting over websocket connections!  
 
 Read `/docs` for more information and how to use.
