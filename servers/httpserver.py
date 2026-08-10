@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, Response
 from flask_cors import CORS
 from tinydb import TinyDB, Query
 import uuid as u
@@ -7,12 +7,11 @@ from waitress import serve
 import time
 from helperfuncs import validate, tokentoname
 import os
+import queue
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))   
-
+clients = []
 import hashdef as h
-
-# All in order of when made
 
 db = TinyDB(os.path.join(BASE_DIR, "users.json"))
 
@@ -67,6 +66,41 @@ def login():
         return token, 200
 
     return "Username/Password invalid", 401
+
+def events(client_queue):
+    try:
+        while True:
+            message = client_queue.get()
+            yield f"data: {message}\n\n"
+    finally:
+        clients.remove(client_queue)
+
+@app.get("/livechat")
+def livechatget():
+    client_queue = queue.Queue()
+    clients.append(client_queue)
+
+    return Response(
+        events(client_queue),
+        mimetype="text/event-stream"
+    )
+
+@app.post("/livechat")
+def livechatpost():
+    data = request.get_json()
+
+    token = data.get("token")
+    userid = validate(token)
+    body = data.get("body")
+    if userid:
+        if len(body) >= 4 and len(body) <= 200:
+            message = {"userid": userid, "body": body, "timestamp": time.time()}
+            
+            for client_queue in clients:
+                client_queue.put(message)
+
+            return "Message sent!", 200
+        return "Message Failed!", 400
 
 @app.post("/updatebio")
 def updatebio():
@@ -182,4 +216,4 @@ portuse = 5613
 print(f"Running on port {portuse}")
 
 if __name__ == "__main__":
-    serve(app, host="0.0.0.0", port=portuse)
+    serve(app, host="0.0.0.0", port=portuse, threads=20)

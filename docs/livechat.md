@@ -1,5 +1,5 @@
 # Live Chatting System  
 
-The live chatting system is a lightweight chatting system with Cami as a backend for logins and user management. This uses a single websocket connection, and as such, is relatively simple.  
-First, connect to the websocket. Next, simply post `{"cmd":"post","token":"<str>","body":"<str>","channel":"<str>"}` and if valid, the message will get broadcast to all users!  
-When you recieve a message it will be in the format: `{"uid":"<str>","body":"<str>"}` which you can then run a get request on `https://serveraddress/user?user=uidvalue`
+The live chatting system is an sse connection. Essentially, you run a get request on the endpoint /livechat, and it is a constant feed of data, and you run posts on the same endpoint to chat.  
+Post: `{"token": <str>, "body": <str>}`  
+Recieve: `{"userid": <str>, "body": <str>, "timestamp": <unix timestamp>}`  
