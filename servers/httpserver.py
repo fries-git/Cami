@@ -6,12 +6,15 @@ import secrets
 from waitress import serve
 import time
 from helperfuncs import validate, tokentoname
+import os
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))   
 
 import hashdef as h
 
 # All in order of when made
 
-db = TinyDB('users.json')
+db = TinyDB(os.path.join(BASE_DIR, "users.json"))
 
 app = Flask(__name__)
 CORS(app)
@@ -25,7 +28,7 @@ def register():
     registerpassword = h.hash(password)
     result = db.search(User.username == registername)
     uid = str(u.uuid4())
-    tokendb = TinyDB("tokens.json")
+    tokendb = TinyDB(os.path.join(BASE_DIR, "tokens.json"))
     if len(result) == 0:
         if len(registername) >= 4 and len(registerpassword) >= 4:
             token = secrets.token_hex(32)
@@ -34,7 +37,7 @@ def register():
             tokendb.insert({"timestamp": unix_time, "token": token, "userid": uid})
             db.insert({'username': registername, 'password': registerpassword, 'usernum': usernum, 'bio': 'yo yo yo what it do homie', 'fries': 0, 'userid': uid})
             print(f"{registername} has registered an account! They are user number: {usernum}.")
-            return token, 201
+            return token, 200
         else:
             return "Password/Username too short (4 char minimum)", 403
     else:
@@ -50,7 +53,7 @@ def login():
     password = data.get("password")
     result = db.search(User.username == username)
 
-    tokendb = TinyDB("tokens.json")
+    tokendb = TinyDB(os.path.join(BASE_DIR, "tokens.json"))
 
     if result and result[0]["password"] == h.hash(password):
         userid = result[0]["userid"]
@@ -138,7 +141,7 @@ def socialpost():
     if not uid:
         return "Invalid token", 401
 
-    postdb = TinyDB('posts.json')
+    postdb = TinyDB(os.path.join(BASE_DIR, "posts.json"))
     if len(body) >= 10 and len(body) <= 200:
         postdb.insert({"body": body, "timestamp": unix_time, "userid": uid, "postid": postid})
         print(f"{tokentoname(token)} has just made a new social post!")
@@ -154,7 +157,7 @@ def socialretrieve():
         offset = 0
 
     if count:
-        postdb = TinyDB("posts.json")
+        postdb = TinyDB(os.path.join(BASE_DIR, "posts.json"))
         results = postdb.all()[::-1][offset:offset + count]
         if results:
             print(f"Someone has just queried {count} posts with {offset} offset!")
@@ -169,7 +172,7 @@ def logout():
     data = request.get_json()
     token = data.get("token")
     if token:
-        tokendb = TinyDB('tokens.json')
+        tokendb = TinyDB(os.path.join(BASE_DIR, "tokens.json"))
         tokendb.remove(Token.token == token)
         print(f"Goodbye {tokentoname(token)}! Come back soon!")
         return "Logged out", 200
