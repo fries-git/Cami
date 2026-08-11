@@ -201,7 +201,7 @@ def setpfp():
     bottom = top + size
 
     img = img.crop((left, top, right, bottom))
-    img = img.resize((256, 256), Image.Resampling.LANCZOS)
+    img = img.resize((128, 128), Image.Resampling.LANCZOS)
     
     if token:
         if not image:
