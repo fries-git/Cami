@@ -1,4 +1,4 @@
-from flask import Flask, request, Response
+from flask import Flask, request, Response, send_file
 from flask_cors import CORS
 from tinydb import TinyDB, Query
 import uuid as u
@@ -7,7 +7,7 @@ from waitress import serve
 import time
 from helperfuncs import validate, tokentoname
 import os
-import queue
+from PIL import Image
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))   
 clients = []
@@ -34,7 +34,7 @@ def register():
             unix_time = int(time.time())
             usernum = len(db) + 1
             tokendb.insert({"timestamp": unix_time, "token": token, "userid": uid})
-            db.insert({'username': registername, 'password': registerpassword, 'usernum': usernum, 'bio': 'yo yo yo what it do homie', 'fries': 0, 'userid': uid})
+            db.insert({'username': registername, 'password': registerpassword, 'usernum': usernum, 'bio': f'Hello! I am {registername}, and I have not yet setup my bio!', 'fries': 0, 'userid': uid})
             print(f"{registername} has registered an account! They are user number: {usernum}.")
             return token, 200
         else:
@@ -184,8 +184,60 @@ def users():
 
     return usernames, 200
 
+@app.post("/setpfp")
+def setpfp():
+    token = request.form.get("token")
+    image = request.files.get("image")
+
+    img = Image.open(image)
+    img = img.convert("RGB")
+
+    width, height = img.size
+    size = min(width, height)
+
+    left = (width - size) // 2
+    top = (height - size) // 2
+    right = left + size
+    bottom = top + size
+
+    img = img.crop((left, top, right, bottom))
+    img = img.resize((256, 256), Image.Resampling.LANCZOS)
+    
+    if token:
+        if not image:
+            return {"error": "No image uploaded"}, 400
+
+        uid = validate(token)
+
+        if not uid:
+            return {"error": "Invalid token"}, 401
+
+        os.makedirs(os.path.join(BASE_DIR, "uploads", "pfps"), exist_ok=True)
+        path = os.path.join(BASE_DIR, "uploads", "pfps", f"{uid}.png")
+        img.save(path)
+
+        return {"message": "Uploaded!", "filename": f"{uid}.png"}, 201
+    else:
+        return "Missing token", 400
+    
+@app.get("/userpfp")
+def getpfp():
+    User = Query()
+    userget = request.args.get("user")
+    result = db.search(User.username == userget) or db.search(User.userid == userget)
+    if result:
+        userid = result[0]["userid"]
+        path = os.path.join(BASE_DIR, "uploads", "pfps", f"{userid}.png")
+        if not os.path.exists(path):
+            path = os.path.join(BASE_DIR, "emptypfp.png")
+
+        return send_file(path, mimetype="image/png")
+
+    else:
+        return "User not found", 404
+
 portuse = 5613
 print(f"Running on port {portuse}")
 
 if __name__ == "__main__":
-    serve(app, host="0.0.0.0", port=portuse, threads=20)
+    serve(app, host="0.0.0.0", port=portuse)
