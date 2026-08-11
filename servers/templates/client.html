@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Cami</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0b0d;
+    --surface: #131519;
+    --surface-2: #1a1d22;
+    --surface-3: #21252b;
+    --border: #262a31;
+    --border-soft: #1c1f24;
+    --text: #e8eaed;
+    --text-dim: #9199a3;
+    --text-faint: #565d67;
+    --accent: #4f7cff;
+    --accent-hover: #6690ff;
+    --accent-soft: rgba(79,124,255,0.13);
+    --success: #35c98c;
+    --success-soft: rgba(53,201,140,0.12);
+    --danger: #ef5a5a;
+    --danger-soft: rgba(239,90,90,0.12);
+    --warm: #e8a33d;
+    --radius-sm: 6px;
+    --radius: 10px;
+    --radius-lg: 18px;
+    --font-display: 'Space Grotesk', system-ui, sans-serif;
+    --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', monospace;
+    --shadow-lg: 0 20px 60px rgba(0,0,0,0.45);
+    --shadow-sm: 0 2px 10px rgba(0,0,0,0.25);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.02em; margin: 0; }
+  p { margin: 0; }
+  button, input, textarea { font-family: inherit; color: inherit; }
+  button { cursor: pointer; }
+  ::selection { background: var(--accent-soft); color: var(--text); }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 8px; border: 2px solid var(--bg); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+  [hidden] { display: none !important; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+
+  /* ---------- shared bits ---------- */
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand-mark {
+    width: 30px; height: 30px; border-radius: 8px;
+    background: linear-gradient(155deg, var(--accent), #7f5cff);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display); font-weight: 700; font-size: 15px; color: #fff;
+    flex-shrink: 0;
+  }
+  .brand-name { font-family: var(--font-display); font-weight: 600; font-size: 18px; letter-spacing: -0.01em; }
+  .brand.small .brand-mark { width: 26px; height: 26px; font-size: 13px; border-radius: 7px; }
+  .brand.small .brand-name { font-size: 16px; }
+
+  .btn {
+    font-family: var(--font-body); font-weight: 600; font-size: 13.5px;
+    padding: 10px 16px; border-radius: var(--radius-sm); border: 1px solid transparent;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    transition: background .15s ease, border-color .15s ease, transform .1s ease, opacity .15s ease;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+  .btn-secondary { background: var(--surface-2); color: var(--text); border-color: var(--border); }
+  .btn-secondary:hover:not(:disabled) { background: var(--surface-3); }
+  .btn-danger { background: transparent; color: var(--danger); border-color: rgba(239,90,90,0.35); }
+  .btn-danger:hover:not(:disabled) { background: var(--danger-soft); }
+  .btn-block { width: 100%; }
+  .btn-sm { padding: 7px 12px; font-size: 12.5px; }
+  .icon-btn {
+    width: 34px; height: 34px; border-radius: var(--radius-sm); background: transparent; border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center; color: var(--text-dim);
+    transition: background .15s ease, color .15s ease, border-color .15s ease;
+  }
+  .icon-btn:hover { background: var(--surface-2); color: var(--text); border-color: var(--border); }
+  .icon-btn svg { width: 16px; height: 16px; }
+
+  .spinner {
+    width: 15px; height: 15px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.35); border-top-color: #fff;
+    animation: spin .7s linear infinite;
+  }
+  .btn-secondary .spinner, .btn-danger .spinner { border-color: var(--border); border-top-color: var(--text-dim); }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .field-hint { font-size: 12px; color: var(--text-faint); margin-top: -4px; }
+  .form-error {
+    font-size: 12.5px; color: var(--danger); min-height: 0; display: none;
+    background: var(--danger-soft); border: 1px solid rgba(239,90,90,0.25); border-radius: var(--radius-sm);
+    padding: 8px 10px;
+  }
+  .form-error.visible { display: block; }
+
+  .avatar {
+    display: inline-flex; border-radius: 50%; overflow: hidden; background: var(--surface-3);
+    flex-shrink: 0; position: relative;
+  }
+  .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .avatar-sm { width: 32px; height: 32px; }
+  .avatar-md { width: 44px; height: 44px; }
+  .avatar-lg { width: 64px; height: 64px; }
+  .avatar-xl { width: 92px; height: 92px; }
+  .avatar.uploading::after {
+    content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.55);
+    border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%;
+    animation: spin .7s linear infinite;
+  }
+
+  .empty-state {
+    text-align: center; padding: 56px 24px; color: var(--text-dim);
+    border: 1px dashed var(--border); border-radius: var(--radius-lg);
+  }
+  .empty-state p { font-family: var(--font-display); font-weight: 600; font-size: 15px; color: var(--text); margin-bottom: 4px; }
+  .empty-state span { font-size: 13px; }
+
+  .fries-icon { width: 14px; height: 14px; color: var(--warm); vertical-align: -2px; }
+
+  /* ---------- toasts ---------- */
+  .toast-container {
+    position: fixed; top: 18px; right: 18px; z-index: 200;
+    display: flex; flex-direction: column; gap: 8px; max-width: 340px;
+  }
+  .toast {
+    background: var(--surface-2); border: 1px solid var(--border); border-left: 3px solid var(--accent);
+    border-radius: var(--radius-sm); padding: 11px 14px; font-size: 13px; box-shadow: var(--shadow-sm);
+    animation: toastIn .2s ease both; display: flex; align-items: flex-start; gap: 10px;
+  }
+  .toast.success { border-left-color: var(--success); }
+  .toast.error { border-left-color: var(--danger); }
+  .toast-msg { flex: 1; }
+  .toast-close { background: none; border: none; color: var(--text-faint); font-size: 15px; line-height: 1; padding: 0; }
+  @keyframes toastIn { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: translateX(0); } }
+
+  /* ---------- auth screen ---------- */
+  .auth-screen {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center; position: relative;
+    padding: 24px; overflow: hidden;
+  }
+  .auth-screen::before {
+    content: ''; position: absolute; inset: 0;
+    background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px);
+    background-size: 26px 26px; mask-image: radial-gradient(circle at 50% 35%, black, transparent 70%);
+  }
+  .auth-screen::after {
+    content: ''; position: absolute; top: 10%; left: 50%; width: 560px; height: 560px; transform: translateX(-50%);
+    background: radial-gradient(circle, var(--accent-soft), transparent 65%); pointer-events: none;
+  }
+  .auth-content { position: relative; z-index: 1; width: 100%; max-width: 380px; animation: authIn .4s ease both; }
+  @keyframes authIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .auth-content .brand { justify-content: center; margin-bottom: 10px; }
+  .auth-tagline { text-align: center; color: var(--text-dim); font-size: 13.5px; margin-bottom: 28px; }
+  .auth-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 6px; box-shadow: var(--shadow-lg);
+  }
+  .auth-tabs { display: flex; gap: 4px; padding: 6px 6px 0; }
+  .auth-tab {
+    flex: 1; background: none; border: none; padding: 10px 8px; font-size: 13px; font-weight: 600;
+    color: var(--text-faint); border-radius: var(--radius-sm); transition: color .15s ease, background .15s ease;
+  }
+  .auth-tab.active { color: var(--text); background: var(--surface-2); }
+  .auth-form { padding: 22px 20px 20px; display: flex; flex-direction: column; gap: 14px; }
+  .auth-form label { display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--text-dim); }
+  .auth-form input[type="text"], .auth-form input[type="password"] {
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 10px 12px; font-size: 14px; color: var(--text); transition: border-color .15s ease;
+  }
+  .auth-form input:focus { border-color: var(--accent); outline: none; }
+  .password-field { position: relative; display: flex; }
+  .password-field input { flex: 1; padding-right: 40px; }
+  .pw-toggle {
+    position: absolute; right: 4px; top: 4px; bottom: 4px; width: 32px; background: none; border: none;
+    color: var(--text-faint); display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm);
+  }
+  .pw-toggle:hover { color: var(--text-dim); }
+  .pw-toggle svg { width: 16px; height: 16px; }
+
+  /* ---------- app shell ---------- */
+  .app-shell { display: flex; min-height: 100vh; }
+  .sidebar {
+    width: 236px; flex-shrink: 0; background: var(--surface); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; justify-content: space-between; padding: 20px 14px;
+    position: sticky; top: 0; height: 100vh;
+  }
+  .nav { display: flex; flex-direction: column; gap: 2px; margin-top: 28px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 11px; padding: 10px 12px; border-radius: var(--radius-sm);
+    background: none; border: none; color: var(--text-dim); font-size: 13.5px; font-weight: 500; text-align: left;
+    transition: background .15s ease, color .15s ease;
+  }
+  .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+  .nav-item:hover { background: var(--surface-2); color: var(--text); }
+  .nav-item.active { background: var(--accent-soft); color: var(--accent); }
+  .sidebar-bottom { display: flex; align-items: center; gap: 8px; }
+  .sidebar-user {
+    flex: 1; display: flex; align-items: center; gap: 10px; background: none; border: 1px solid transparent;
+    border-radius: var(--radius-sm); padding: 6px; text-align: left; min-width: 0;
+    transition: background .15s ease;
+  }
+  .sidebar-user:hover { background: var(--surface-2); }
+  .sidebar-user-info { min-width: 0; display: flex; flex-direction: column; }
+  .sidebar-username { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sidebar-role { font-size: 11px; color: var(--text-faint); }
+
+  .main { flex: 1; min-width: 0; }
+  .page { max-width: 700px; margin: 0 auto; padding: 44px 32px 80px; }
+  .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; gap: 12px; }
+  .page-header h1 { font-size: 22px; }
+
+  /* feed */
+  .compose { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 14px; margin-bottom: 28px; }
+  .compose textarea {
+    width: 100%; resize: none; min-height: 64px; background: none; border: none; color: var(--text);
+    font-size: 14.5px; line-height: 1.5; font-family: var(--font-body); outline: none;
+  }
+  .compose textarea::placeholder { color: var(--text-faint); }
+  .compose-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 6px; padding-top: 10px; border-top: 1px solid var(--border-soft); }
+  .compose-count { font-size: 12px; color: var(--text-faint); font-family: var(--font-mono); }
+  .compose-count.warning { color: var(--warm); }
+  .compose .form-error { margin-top: 10px; }
+
+  .feed-list { display: flex; flex-direction: column; gap: 10px; }
+  .post-card {
+    display: flex; gap: 12px; padding: 16px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+  }
+  .post-body { min-width: 0; flex: 1; }
+  .post-meta { display: flex; align-items: baseline; gap: 6px; margin-bottom: 4px; }
+  .post-author { background: none; border: none; padding: 0; font-weight: 600; font-size: 13.5px; color: var(--text); }
+  .post-author:hover { color: var(--accent); }
+  .post-dot { color: var(--text-faint); font-size: 12px; }
+  .post-time { font-size: 12px; color: var(--text-faint); font-family: var(--font-mono); }
+  .post-text { font-size: 14.5px; line-height: 1.55; color: var(--text); word-wrap: break-word; white-space: pre-wrap; }
+  @keyframes fadeInUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  .card-enter { animation: fadeInUp .25s ease both; }
+
+  #loadMoreBtn { margin-top: 14px; }
+
+  /* explore */
+  .search-box { display: flex; gap: 8px; }
+  .search-box input {
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 8px 12px; font-size: 13px; color: var(--text); width: 220px;
+  }
+  .search-box input:focus { border-color: var(--accent); outline: none; }
+  .users-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  .user-card {
+    display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 20px 12px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    transition: border-color .15s ease, transform .1s ease;
+  }
+  .user-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .user-card-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .grid-loading, .modal-loading { color: var(--text-faint); font-size: 13px; padding: 20px; text-align: center; }
+
+  /* profile */
+  .profile-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 28px;
+  }
+  .profile-top { display: flex; align-items: center; gap: 18px; margin-bottom: 22px; }
+  .avatar-upload-wrap { position: relative; cursor: pointer; border-radius: 50%; }
+  .avatar-upload-wrap::after {
+    content: ''; position: absolute; inset: 0; border-radius: 50%; background: rgba(0,0,0,0.5);
+    opacity: 0; transition: opacity .15s ease;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.8'><path d='M4 8h3l2-3h6l2 3h3v11H4z'/><circle cx='12' cy='13' r='3.3'/></svg>");
+    background-repeat: no-repeat; background-position: center; background-size: 22px;
+  }
+  .avatar-upload-wrap:hover::after { opacity: 1; }
+  .profile-names { min-width: 0; }
+  .profile-names h2 { font-size: 19px; margin-bottom: 3px; }
+  .profile-usernum { font-size: 12.5px; color: var(--text-faint); font-family: var(--font-mono); }
+
+  .bio-block { margin-bottom: 22px; }
+  .bio-label-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .bio-label-row span { font-size: 11.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-faint); }
+  .bio-text { font-size: 14px; color: var(--text-dim); line-height: 1.55; white-space: pre-wrap; }
+  .bio-edit-btn { background: none; border: none; color: var(--accent); font-size: 12.5px; font-weight: 600; padding: 2px; }
+  .bio-editor { display: flex; flex-direction: column; gap: 8px; }
+  .bio-editor textarea {
+    width: 100%; min-height: 80px; resize: vertical; background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 10px 12px; color: var(--text); font-size: 14px; font-family: var(--font-body);
+  }
+  .bio-editor textarea:focus { border-color: var(--accent); outline: none; }
+  .bio-editor-footer { display: flex; align-items: center; justify-content: space-between; }
+
+  .stat-row { display: flex; gap: 10px; margin-bottom: 18px; }
+  .stat {
+    flex: 1; background: var(--surface-2); border: 1px solid var(--border-soft); border-radius: var(--radius);
+    padding: 12px 14px; display: flex; flex-direction: column; gap: 4px;
+  }
+  .stat-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-faint); display: flex; align-items: center; gap: 5px; }
+  .stat-value { font-family: var(--font-display); font-size: 18px; font-weight: 600; }
+
+  .id-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; background: var(--surface-2); border-radius: var(--radius); border: 1px solid var(--border-soft); }
+  .id-label { font-size: 11.5px; color: var(--text-faint); font-weight: 600; }
+  .id-value { font-family: var(--font-mono); font-size: 12.5px; color: var(--text-dim); }
+
+  /* settings */
+  .settings-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 24px; margin-bottom: 16px;
+  }
+  .settings-card h2 { font-size: 15px; margin-bottom: 4px; }
+  .settings-card .desc { font-size: 12.5px; color: var(--text-faint); margin-bottom: 18px; }
+  .settings-form { display: flex; flex-direction: column; gap: 12px; max-width: 340px; }
+  .settings-form label { display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--text-dim); }
+  .settings-form input {
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 9px 12px; font-size: 13.5px; color: var(--text);
+  }
+  .settings-form input:focus { border-color: var(--accent); outline: none; }
+  .token-row { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+  .token-display {
+    flex: 1; background: var(--surface-2); border: 1px solid var(--border-soft); border-radius: var(--radius-sm);
+    padding: 10px 12px; font-family: var(--font-mono); font-size: 12.5px; color: var(--text-dim);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+
+  /* modal */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(5,6,8,0.7); backdrop-filter: blur(2px);
+    display: flex; align-items: center; justify-content: center; z-index: 150; padding: 20px;
+    animation: fadeInUp .15s ease both;
+  }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    width: 100%; max-width: 360px; padding: 26px; position: relative; box-shadow: var(--shadow-lg);
+  }
+  .modal-close { position: absolute; top: 14px; right: 14px; background: none; border: none; color: var(--text-faint); font-size: 20px; line-height: 1; padding: 4px; }
+  .modal-close:hover { color: var(--text); }
+  .modal-profile { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px; }
+  .modal-profile .avatar { margin-bottom: 10px; }
+  .modal-profile h2 { font-size: 17px; }
+  .modal-bio { font-size: 13px; color: var(--text-dim); margin: 8px 0 18px; line-height: 1.5; }
+  .modal-profile .stat-row, .modal-profile .id-row { width: 100%; }
+  .modal-profile .stat-row { margin-bottom: 10px; }
+
+  /* mobile */
+  @media (max-width: 760px) {
+    .app-shell { flex-direction: column; }
+    .sidebar {
+      position: fixed; top: auto; bottom: 0; left: 0; right: 0; height: auto; width: 100%;
+      flex-direction: row; align-items: center; justify-content: space-between; padding: 8px 14px;
+      border-right: none; border-top: 1px solid var(--border); z-index: 60;
+    }
+    .sidebar-top { display: flex; align-items: center; gap: 18px; }
+    .sidebar-top .brand { display: none; }
+    .nav { flex-direction: row; margin-top: 0; gap: 2px; }
+    .nav-item span { display: none; }
+    .nav-item { padding: 9px; }
+    .sidebar-bottom { gap: 6px; }
+    .sidebar-user-info { display: none; }
+    .main { padding-bottom: 70px; }
+    .page { padding: 28px 16px 40px; }
+    .search-box input { width: 140px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="toastContainer" class="toast-container"></div>
+
+<!-- ============ AUTH SCREEN ============ -->
+<div id="authScreen" class="auth-screen">
+  <div class="auth-content">
+    <div class="brand">
+      <span class="brand-mark">C</span>
+      <span class="brand-name">Cami</span>
+    </div>
+    <p class="auth-tagline">Minimal, session-based social.</p>
+
+    <div class="auth-card">
+      <div class="auth-tabs">
+        <button type="button" class="auth-tab active" data-tab="login">Log in</button>
+        <button type="button" class="auth-tab" data-tab="register">Create account</button>
+      </div>
+
+      <form id="loginForm" class="auth-form">
+        <label>Username
+          <input type="text" id="loginUsername" autocomplete="username" required />
+        </label>
+        <label>Password
+          <div class="password-field">
+            <input type="password" id="loginPassword" autocomplete="current-password" required />
+            <button type="button" class="pw-toggle" data-target="loginPassword" aria-label="Show password">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </label>
+        <div class="form-error" id="loginError"></div>
+        <button type="submit" class="btn btn-primary btn-block" id="loginSubmitBtn">
+          <span class="btn-label">Log in</span>
+          <span class="spinner" hidden></span>
+        </button>
+      </form>
+
+      <form id="registerForm" class="auth-form" hidden>
+        <label>Username
+          <input type="text" id="registerUsername" minlength="4" autocomplete="username" required />
+        </label>
+        <label>Password
+          <div class="password-field">
+            <input type="password" id="registerPassword" minlength="4" autocomplete="new-password" required />
+            <button type="button" class="pw-toggle" data-target="registerPassword" aria-label="Show password">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </label>
+        <p class="field-hint">4 characters minimum for both fields.</p>
+        <div class="form-error" id="registerError"></div>
+        <button type="submit" class="btn btn-primary btn-block" id="registerSubmitBtn">
+          <span class="btn-label">Create account</span>
+          <span class="spinner" hidden></span>
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ============ APP SHELL ============ -->
+<div id="appShell" class="app-shell" hidden>
+  <aside class="sidebar">
+    <div class="sidebar-top" style="display:flex; flex-direction:column; width:100%;">
+      <div class="brand small">
+        <span class="brand-mark">C</span>
+        <span class="brand-name">Cami</span>
+      </div>
+      <nav class="nav">
+        <button class="nav-item active" data-page="feed">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+          <span>Feed</span>
+        </button>
+        <button class="nav-item" data-page="explore">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>
+          <span>Explore</span>
+        </button>
+        <button class="nav-item" data-page="profile">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1-4 4-6 7-6s6 2 7 6"/></svg>
+          <span>Profile</span>
+        </button>
+        <button class="nav-item" data-page="settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 13a7.9 7.9 0 000-2l2-1.5-2-3.4-2.3.9a8 8 0 00-1.7-1l-.4-2.4h-4l-.4 2.4a8 8 0 00-1.7 1l-2.3-.9-2 3.4L6.6 11a7.9 7.9 0 000 2l-2 1.5 2 3.4 2.3-.9c.5.4 1.1.8 1.7 1l.4 2.4h4l.4-2.4a8 8 0 001.7-1l2.3.9 2-3.4z"/></svg>
+          <span>Settings</span>
+        </button>
+      </nav>
+    </div>
+    <div class="sidebar-bottom">
+      <button class="sidebar-user" data-page="profile" id="sidebarUserBtn">
+        <span id="sidebarAvatarWrap"></span>
+        <div class="sidebar-user-info">
+          <span id="sidebarUsername" class="sidebar-username">—</span>
+          <span class="sidebar-role">Member</span>
+        </div>
+      </button>
+      <button class="icon-btn" id="logoutBtn" aria-label="Log out" title="Log out">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+      </button>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <!-- FEED -->
+    <section class="page" data-page="feed">
+      <header class="page-header">
+        <h1>Feed</h1>
+        <button class="btn btn-secondary btn-sm" id="refreshFeedBtn">Refresh</button>
+      </header>
+
+      <form id="composeForm" class="compose">
+        <textarea id="composeBody" maxlength="200" placeholder="Share something (10–200 characters)"></textarea>
+        <div class="compose-footer">
+          <span id="composeCount" class="compose-count">0 / 200</span>
+          <button type="submit" class="btn btn-primary btn-sm" id="composeSubmit" disabled>
+            <span class="btn-label">Post</span>
+            <span class="spinner" hidden></span>
+          </button>
+        </div>
+        <div class="form-error" id="composeError"></div>
+      </form>
+
+      <div id="feedList" class="feed-list"></div>
+      <div id="feedEmpty" class="empty-state" hidden>
+        <p>Nothing here yet</p>
+        <span>Posts from everyone on Cami will show up here once someone shares something.</span>
+      </div>
+      <button id="loadMoreBtn" class="btn btn-secondary btn-block" hidden>Load more</button>
+    </section>
+
+    <!-- EXPLORE -->
+    <section class="page" data-page="explore" hidden>
+      <header class="page-header">
+        <h1>Explore</h1>
+        <div class="search-box">
+          <input type="text" id="userSearch" placeholder="Find by username or ID" />
+          <button class="btn btn-secondary btn-sm" id="userSearchBtn">Search</button>
+        </div>
+      </header>
+      <div id="usersGrid" class="users-grid"></div>
+    </section>
+
+    <!-- PROFILE -->
+    <section class="page" data-page="profile" hidden>
+      <header class="page-header"><h1>Profile</h1></header>
+
+      <div class="profile-card">
+        <div class="profile-top">
+          <div class="avatar-upload-wrap" id="avatarUploadWrap">
+            <span id="profileAvatarWrap"></span>
+          </div>
+          <input type="file" id="avatarUploadInput" accept="image/png,image/jpeg,image/webp" hidden />
+          <div class="profile-names">
+            <h2 id="profileUsernameEl">—</h2>
+            <span class="profile-usernum" id="profileUsernumEl">—</span>
+          </div>
+        </div>
+
+        <div class="bio-block">
+          <div class="bio-label-row">
+            <span>Bio</span>
+            <button class="bio-edit-btn" id="bioEditBtn">Edit</button>
+          </div>
+          <p class="bio-text" id="bioDisplay"></p>
+          <div class="bio-editor" id="bioEditor" hidden>
+            <textarea id="bioTextarea" maxlength="200"></textarea>
+            <div class="bio-editor-footer">
+              <span class="compose-count" id="bioCount">0 / 200</span>
+              <div style="display:flex; gap:8px;">
+                <button class="btn btn-secondary btn-sm" id="bioCancelBtn" type="button">Cancel</button>
+                <button class="btn btn-primary btn-sm" id="bioSaveBtn" type="button">
+                  <span class="btn-label">Save</span>
+                  <span class="spinner" hidden></span>
+                </button>
+              </div>
+            </div>
+            <div class="form-error" id="bioError"></div>
+          </div>
+        </div>
+
+        <div class="stat-row">
+          <div class="stat">
+            <span class="stat-label">Member</span>
+            <span class="stat-value" id="profileUsernumStat">—</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">
+              <svg class="fries-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 10L5 21h14l-1-11z"/><line x1="9" y1="4" x2="9" y2="11"/><line x1="12" y1="2" x2="12" y2="11"/><line x1="15" y1="4" x2="15" y2="11"/></svg>
+              Fries
+            </span>
+            <span class="stat-value" id="profileFriesEl">—</span>
+          </div>
+        </div>
+
+        <div class="id-row">
+          <span class="id-label">User ID</span>
+          <code class="id-value" id="profileUseridEl">—</code>
+        </div>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="page" data-page="settings" hidden>
+      <header class="page-header"><h1>Settings</h1></header>
+
+      <div class="settings-card">
+        <h2>Change password</h2>
+        <p class="desc">You'll keep the same session — this only updates your password.</p>
+        <form id="changePassForm" class="settings-form">
+          <label>Current password
+            <input type="password" id="oldPassword" autocomplete="current-password" required />
+          </label>
+          <label>New password
+            <input type="password" id="newPassword" minlength="4" autocomplete="new-password" required />
+          </label>
+          <label>Confirm new password
+            <input type="password" id="confirmPassword" minlength="4" autocomplete="new-password" required />
+          </label>
+          <div class="form-error" id="changePassError"></div>
+          <button type="submit" class="btn btn-primary" id="changePassBtn" style="align-self:flex-start;">
+            <span class="btn-label">Update password</span>
+            <span class="spinner" hidden></span>
+          </button>
+        </form>
+      </div>
+
+      <div class="settings-card">
+        <h2>Session</h2>
+        <p class="desc">Your token authenticates every request this session makes. Anyone with it can act as you — keep it private. Logging in elsewhere replaces it.</p>
+        <div class="token-row">
+          <code class="token-display" id="tokenDisplay">••••••••••••••••••••••••••••••••</code>
+          <button class="icon-btn" id="tokenRevealBtn" aria-label="Show token">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+          <button class="icon-btn" id="tokenCopyBtn" aria-label="Copy token">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          </button>
+        </div>
+        <button class="btn btn-danger" id="logoutBtn2">Log out</button>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- USER MODAL -->
+<div id="userModal" class="modal-overlay" hidden>
+  <div class="modal">
+    <button class="modal-close" id="userModalClose" aria-label="Close">&times;</button>
+    <div id="userModalContent"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  const FALLBACK_AVATAR = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><rect width='40' height='40' fill='%231a1d22'/><circle cx='20' cy='16' r='7' fill='%23383e47'/><rect x='7' y='26' width='26' height='12' rx='6' fill='%23383e47'/></svg>";
+  let cacheBust = Date.now();
+
+  const state = {
+    token: null,
+    me: null,
+    userCache: {},
+    feedOffset: 0,
+    feedCount: 15,
+    feedEnd: false,
+  };
+
+  /* ---------------- API helper ---------------- */
+  async function api(path, opts) {
+    opts = opts || {};
+    let url = path;
+    if (opts.params) {
+      const qs = new URLSearchParams(opts.params).toString();
+      url += (url.indexOf('?') >= 0 ? '&' : '?') + qs;
+    }
+    const fetchOpts = { method: opts.method || 'GET' };
+    if (opts.body) {
+      if (opts.isForm) {
+        fetchOpts.body = opts.body;
+      } else {
+        fetchOpts.headers = { 'Content-Type': 'application/json' };
+        fetchOpts.body = JSON.stringify(opts.body);
+      }
+    }
+    let res;
+    try {
+      res = await fetch(url, fetchOpts);
+    } catch (err) {
+      return { ok: false, status: 0, data: "Couldn't reach the server. Check your connection and try again." };
+    }
+    const contentType = res.headers.get('content-type') || '';
+    let data;
+    try {
+      data = contentType.indexOf('application/json') >= 0 ? await res.json() : await res.text();
+    } catch (err) {
+      data = '';
+    }
+    return { ok: res.ok, status: res.status, data };
+  }
+
+  function errText(res, fallback) {
+    if (typeof res.data === 'string' && res.data) return res.data;
+    if (res.data && typeof res.data === 'object' && res.data.error) return res.data.error;
+    return fallback;
+  }
+
+  /* ---------------- utils ---------------- */
+  function escapeHtml(str) {
+    return String(str == null ? '' : str).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function relativeTime(unixSeconds) {
+    const diff = Math.floor(Date.now() / 1000 - unixSeconds);
+    if (diff < 5) return 'just now';
+    if (diff < 60) return diff + 's ago';
+    if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+    if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+    if (diff < 604800) return Math.floor(diff / 86400) + 'd ago';
+    return new Date(unixSeconds * 1000).toLocaleDateString();
+  }
+
+  function avatarImg(identifier, alt, size) {
+    size = size || 'md';
+    const src = '/userpfp?user=' + encodeURIComponent(identifier) + '&t=' + cacheBust;
+    return '<span class="avatar avatar-' + size + '"><img src="' + src + '" alt="' + escapeHtml(alt || '') +
+      '" loading="lazy" onerror="this.onerror=null;this.src=\'' + FALLBACK_AVATAR + '\'"></span>';
+  }
+
+  function setLoading(btn, loading) {
+    btn.disabled = loading;
+    const spinner = btn.querySelector('.spinner');
+    const label = btn.querySelector('.btn-label');
+    if (spinner) spinner.hidden = !loading;
+    if (label) label.style.opacity = loading ? '0.6' : '1';
+  }
+
+  function showError(el, msg) { el.textContent = msg; el.classList.add('visible'); }
+  function clearError(el) { el.textContent = ''; el.classList.remove('visible'); }
+
+  function toast(message, type) {
+    const container = document.getElementById('toastContainer');
+    const el = document.createElement('div');
+    el.className = 'toast' + (type ? ' ' + type : '');
+    el.innerHTML = '<span class="toast-msg"></span><button class="toast-close" aria-label="Dismiss">&times;</button>';
+    el.querySelector('.toast-msg').textContent = message;
+    el.querySelector('.toast-close').addEventListener('click', function () { el.remove(); });
+    container.appendChild(el);
+    setTimeout(function () { el.remove(); }, 5000);
+  }
+
+  /* ---------------- user cache ---------------- */
+  async function fetchUser(identifier) {
+    if (state.userCache[identifier]) return state.userCache[identifier];
+    const res = await api('/user', { params: { user: identifier } });
+    if (res.ok) {
+      const u = res.data;
+      state.userCache[u.username] = u;
+      state.userCache[u.userid] = u;
+      return u;
+    }
+    return null;
+  }
+
+  /* ================= AUTH SCREEN ================= */
+  const authScreen = document.getElementById('authScreen');
+  const appShell = document.getElementById('appShell');
+  const loginForm = document.getElementById('loginForm');
+  const registerForm = document.getElementById('registerForm');
+  const loginError = document.getElementById('loginError');
+  const registerError = document.getElementById('registerError');
+
+  document.querySelectorAll('.auth-tab').forEach(function (tab) {
+    tab.addEventListener('click', function () { showAuthTab(tab.dataset.tab); });
+  });
+  function showAuthTab(name) {
+    document.querySelectorAll('.auth-tab').forEach(function (t) { t.classList.toggle('active', t.dataset.tab === name); });
+    loginForm.hidden = name !== 'login';
+    registerForm.hidden = name !== 'register';
+    clearError(loginError); clearError(registerError);
+  }
+
+  document.querySelectorAll('.pw-toggle').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      const input = document.getElementById(btn.dataset.target);
+      const showing = input.type === 'text';
+      input.type = showing ? 'password' : 'text';
+      btn.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
+    });
+  });
+
+  loginForm.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    clearError(loginError);
+    const username = document.getElementById('loginUsername').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const btn = document.getElementById('loginSubmitBtn');
+    setLoading(btn, true);
+    const res = await api('/login', { method: 'POST', body: { username: username, password: password } });
+    setLoading(btn, false);
+    if (res.ok) {
+      state.token = res.data;
+      await enterApp(username);
+    } else {
+      showError(loginError, errText(res, 'Login failed.'));
+    }
+  });
+
+  registerForm.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    clearError(registerError);
+    const username = document.getElementById('registerUsername').value.trim();
+    const password = document.getElementById('registerPassword').value;
+    if (username.length < 4 || password.length < 4) {
+      showError(registerError, 'Password/Username too short (4 char minimum)');
+      return;
+    }
+    const btn = document.getElementById('registerSubmitBtn');
+    setLoading(btn, true);
+    const res = await api('/register', { method: 'POST', body: { username: username, password: password } });
+    setLoading(btn, false);
+    if (res.ok) {
+      state.token = res.data;
+      toast('Account created. Welcome to Cami.', 'success');
+      await enterApp(username);
+    } else {
+      showError(registerError, errText(res, 'Could not create your account.'));
+    }
+  });
+
+  async function enterApp(identifier) {
+    const me = await fetchUser(identifier);
+    if (!me) { toast('Logged in, but your profile could not be loaded.', 'error'); return; }
+    state.me = me;
+    authScreen.hidden = true;
+    appShell.hidden = false;
+    document.getElementById('sidebarAvatarWrap').innerHTML = avatarImg(me.userid, me.username, 'sm');
+    document.getElementById('sidebarUsername').textContent = me.username;
+    document.getElementById('tokenDisplay').textContent = maskToken(state.token);
+    renderProfilePage();
+    showPage('feed');
+    loadFeed(true);
+  }
+
+  function logout() {
+    if (state.token) { api('/logout', { method: 'POST', body: { token: state.token } }); }
+    state.token = null; state.me = null; state.userCache = {};
+    appShell.hidden = true;
+    authScreen.hidden = false;
+    loginForm.reset(); registerForm.reset();
+    showAuthTab('login');
+  }
+  document.getElementById('logoutBtn').addEventListener('click', logout);
+  document.getElementById('logoutBtn2').addEventListener('click', logout);
+
+  /* ================= NAVIGATION ================= */
+  function showPage(name) {
+    document.querySelectorAll('.nav-item[data-page]').forEach(function (n) { n.classList.toggle('active', n.dataset.page === name); });
+    document.querySelectorAll('.page[data-page]').forEach(function (p) { p.hidden = p.dataset.page !== name; });
+    if (name === 'explore') loadExplore();
+    if (name === 'profile') renderProfilePage();
+  }
+  document.querySelectorAll('[data-page]').forEach(function (el) {
+    el.addEventListener('click', function () { showPage(el.dataset.page); });
+  });
+
+  /* ================= FEED ================= */
+  const feedListEl = document.getElementById('feedList');
+  const feedEmptyEl = document.getElementById('feedEmpty');
+  const loadMoreBtn = document.getElementById('loadMoreBtn');
+
+  async function loadFeed(reset) {
+    if (reset) {
+      state.feedOffset = 0;
+      state.feedEnd = false;
+      feedListEl.innerHTML = '';
+      loadMoreBtn.hidden = true;
+    }
+    if (state.feedEnd) return;
+    loadMoreBtn.disabled = true;
+    const res = await api('/social', { params: { count: state.feedCount, offset: state.feedOffset } });
+    loadMoreBtn.disabled = false;
+
+    if (res.status === 204) {
+      state.feedEnd = true;
+      loadMoreBtn.hidden = true;
+      feedEmptyEl.hidden = state.feedOffset > 0;
+      return;
+    }
+    if (!res.ok) { toast(errText(res, 'Could not load the feed.'), 'error'); return; }
+
+    const posts = res.data;
+    feedEmptyEl.hidden = true;
+    const authors = await Promise.all(posts.map(function (p) { return fetchUser(p.userid); }));
+    posts.forEach(function (p, i) { feedListEl.appendChild(renderPostCard(p, authors[i])); });
+    state.feedOffset += posts.length;
+    loadMoreBtn.hidden = posts.length < state.feedCount;
+  }
+
+  function renderPostCard(post, author) {
+    const el = document.createElement('article');
+    el.className = 'post-card card-enter';
+    el.innerHTML =
+      '<div>' + avatarImg(post.userid, author ? author.username : '', 'md') + '</div>' +
+      '<div class="post-body">' +
+        '<div class="post-meta">' +
+          '<button class="post-author"></button>' +
+          '<span class="post-dot">&middot;</span>' +
+          '<time class="post-time"></time>' +
+        '</div>' +
+        '<p class="post-text"></p>' +
+      '</div>';
+    el.querySelector('.post-author').textContent = author ? author.username : 'Unknown user';
+    el.querySelector('.post-time').textContent = relativeTime(post.timestamp);
+    el.querySelector('.post-time').title = new Date(post.timestamp * 1000).toLocaleString();
+    el.querySelector('.post-text').textContent = post.body;
+    el.querySelector('.post-author').addEventListener('click', function () { openUserModal(post.userid); });
+    return el;
+  }
+
+  document.getElementById('refreshFeedBtn').addEventListener('click', function () { loadFeed(true); });
+  loadMoreBtn.addEventListener('click', function () { loadFeed(false); });
+
+  const composeForm = document.getElementById('composeForm');
+  const composeBody = document.getElementById('composeBody');
+  const composeCount = document.getElementById('composeCount');
+  const composeSubmit = document.getElementById('composeSubmit');
+  const composeError = document.getElementById('composeError');
+
+  composeBody.addEventListener('input', function () {
+    const len = composeBody.value.length;
+    composeCount.textContent = len + ' / 200';
+    composeCount.classList.toggle('warning', len > 180);
+    composeSubmit.disabled = len < 10 || len > 200;
+    clearError(composeError);
+  });
+  composeBody.addEventListener('keydown', function (e) {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && !composeSubmit.disabled) composeForm.requestSubmit();
+  });
+
+  composeForm.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    clearError(composeError);
+    const body = composeBody.value;
+    setLoading(composeSubmit, true);
+    const res = await api('/social', { method: 'POST', body: { body: body, token: state.token } });
+    setLoading(composeSubmit, false);
+    if (res.ok) {
+      composeBody.value = '';
+      composeCount.textContent = '0 / 200';
+      composeSubmit.disabled = true;
+      loadFeed(true);
+      toast('Posted.', 'success');
+    } else {
+      showError(composeError, errText(res, 'Could not post right now.'));
+    }
+  });
+
+  /* ================= EXPLORE ================= */
+  const usersGridEl = document.getElementById('usersGrid');
+
+  async function loadExplore() {
+    usersGridEl.innerHTML = '<div class="grid-loading">Loading users…</div>';
+    const res = await api('/users');
+    if (!res.ok) { usersGridEl.innerHTML = ''; toast(errText(res, 'Could not load users.'), 'error'); return; }
+    const usernames = res.data;
+    usersGridEl.innerHTML = '';
+    if (!usernames.length) {
+      usersGridEl.innerHTML = '<div class="empty-state"><p>No one here yet</p><span>Once people join Cami, they will show up here.</span></div>';
+      return;
+    }
+    usernames.forEach(function (name) { usersGridEl.appendChild(renderUserCard(name)); });
+  }
+
+  function renderUserCard(username) {
+    const el = document.createElement('button');
+    el.className = 'user-card card-enter';
+    el.innerHTML = avatarImg(username, username, 'md') + '<span class="user-card-name"></span>';
+    el.querySelector('.user-card-name').textContent = username;
+    el.addEventListener('click', function () { openUserModal(username); });
+    return el;
+  }
+
+  document.getElementById('userSearchBtn').addEventListener('click', runUserSearch);
+  document.getElementById('userSearch').addEventListener('keydown', function (e) { if (e.key === 'Enter') runUserSearch(); });
+  function runUserSearch() {
+    const val = document.getElementById('userSearch').value.trim();
+    if (!val) return;
+    openUserModal(val);
+  }
+
+  /* ================= USER MODAL ================= */
+  const userModal = document.getElementById('userModal');
+  const userModalContent = document.getElementById('userModalContent');
+
+  async function openUserModal(identifier) {
+    userModal.hidden = false;
+    userModalContent.innerHTML = '<div class="modal-loading">Loading…</div>';
+    const u = await fetchUser(identifier);
+    if (!u) { userModalContent.innerHTML = '<p style="text-align:center;color:var(--text-dim);padding:20px 0;">User not found.</p>'; return; }
+    userModalContent.innerHTML =
+      '<div class="modal-profile">' +
+        avatarImg(u.userid, u.username, 'lg') +
+        '<h2></h2>' +
+        '<p class="modal-bio"></p>' +
+        '<div class="stat-row">' +
+          '<div class="stat"><span class="stat-label">Member</span><span class="stat-value">#' + escapeHtml(u.usernum) + '</span></div>' +
+          '<div class="stat"><span class="stat-label"><svg class="fries-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 10L5 21h14l-1-11z"/><line x1="9" y1="4" x2="9" y2="11"/><line x1="12" y1="2" x2="12" y2="11"/><line x1="15" y1="4" x2="15" y2="11"/></svg>Fries</span><span class="stat-value">' + escapeHtml(u.fries) + '</span></div>' +
+        '</div>' +
+        '<div class="id-row"><span class="id-label">User ID</span><code class="id-value"></code></div>' +
+      '</div>';
+    userModalContent.querySelector('h2').textContent = u.username;
+    userModalContent.querySelector('.modal-bio').textContent = u.bio;
+    userModalContent.querySelector('.id-value').textContent = u.userid;
+  }
+  document.getElementById('userModalClose').addEventListener('click', function () { userModal.hidden = true; });
+  userModal.addEventListener('click', function (e) { if (e.target === userModal) userModal.hidden = true; });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !userModal.hidden) userModal.hidden = true; });
+
+  /* ================= PROFILE ================= */
+  function renderProfilePage() {
+    const me = state.me;
+    if (!me) return;
+    document.getElementById('profileAvatarWrap').innerHTML = avatarImg(me.userid, me.username, 'xl');
+    document.getElementById('profileUsernameEl').textContent = me.username;
+    document.getElementById('profileUsernumEl').textContent = 'User #' + me.usernum;
+    document.getElementById('profileUsernumStat').textContent = '#' + me.usernum;
+    document.getElementById('profileFriesEl').textContent = me.fries;
+    document.getElementById('profileUseridEl').textContent = me.userid;
+    document.getElementById('bioDisplay').textContent = me.bio;
+  }
+
+  document.getElementById('avatarUploadWrap').addEventListener('click', function () {
+    document.getElementById('avatarUploadInput').click();
+  });
+  document.getElementById('avatarUploadInput').addEventListener('change', async function (e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const fd = new FormData();
+    fd.append('token', state.token);
+    fd.append('image', file);
+    const wrap = document.getElementById('profileAvatarWrap').querySelector('.avatar');
+    if (wrap) wrap.classList.add('uploading');
+    const res = await api('/setpfp', { method: 'POST', body: fd, isForm: true });
+    if (res.ok) {
+      cacheBust = Date.now();
+      document.getElementById('profileAvatarWrap').innerHTML = avatarImg(state.me.userid, state.me.username, 'xl');
+      document.getElementById('sidebarAvatarWrap').innerHTML = avatarImg(state.me.userid, state.me.username, 'sm');
+      toast('Profile photo updated.', 'success');
+    } else {
+      if (wrap) wrap.classList.remove('uploading');
+      toast(errText(res, 'Could not upload photo.'), 'error');
+    }
+    e.target.value = '';
+  });
+
+  const bioDisplay = document.getElementById('bioDisplay');
+  const bioEditor = document.getElementById('bioEditor');
+  const bioTextarea = document.getElementById('bioTextarea');
+  const bioCount = document.getElementById('bioCount');
+  const bioError = document.getElementById('bioError');
+  const bioEditBtn = document.getElementById('bioEditBtn');
+
+  bioEditBtn.addEventListener('click', function () {
+    bioTextarea.value = state.me.bio;
+    bioCount.textContent = bioTextarea.value.length + ' / 200';
+    bioDisplay.hidden = true;
+    bioEditBtn.hidden = true;
+    bioEditor.hidden = false;
+    bioTextarea.focus();
+  });
+  bioTextarea.addEventListener('input', function () {
+    bioCount.textContent = bioTextarea.value.length + ' / 200';
+    clearError(bioError);
+  });
+  document.getElementById('bioCancelBtn').addEventListener('click', function () {
+    bioEditor.hidden = true;
+    bioDisplay.hidden = false;
+    bioEditBtn.hidden = false;
+    clearError(bioError);
+  });
+  document.getElementById('bioSaveBtn').addEventListener('click', async function () {
+    clearError(bioError);
+    const newbio = bioTextarea.value;
+    if (!newbio.length) { showError(bioError, 'Bio cannot be empty.'); return; }
+    const btn = document.getElementById('bioSaveBtn');
+    setLoading(btn, true);
+    const res = await api('/updatebio', { method: 'POST', body: { token: state.token, newbio: newbio } });
+    setLoading(btn, false);
+    if (res.ok) {
+      state.me.bio = res.data;
+      state.userCache[state.me.username] = state.me;
+      state.userCache[state.me.userid] = state.me;
+      bioDisplay.textContent = state.me.bio;
+      bioEditor.hidden = true;
+      bioDisplay.hidden = false;
+      bioEditBtn.hidden = false;
+      toast('Bio updated.', 'success');
+    } else {
+      showError(bioError, errText(res, 'Could not update your bio.'));
+    }
+  });
+
+  /* ================= SETTINGS ================= */
+  function maskToken(t) { return t ? '•'.repeat(Math.min(t.length, 32)) : ''; }
+  let tokenRevealed = false;
+  const tokenDisplay = document.getElementById('tokenDisplay');
+  document.getElementById('tokenRevealBtn').addEventListener('click', function () {
+    tokenRevealed = !tokenRevealed;
+    tokenDisplay.textContent = tokenRevealed ? state.token : maskToken(state.token);
+    this.setAttribute('aria-label', tokenRevealed ? 'Hide token' : 'Show token');
+  });
+  document.getElementById('tokenCopyBtn').addEventListener('click', async function () {
+    try {
+      await navigator.clipboard.writeText(state.token);
+      toast('Token copied to clipboard.', 'success');
+    } catch (err) {
+      toast('Could not copy automatically. Reveal it and copy manually.', 'error');
+    }
+  });
+
+  const changePassForm = document.getElementById('changePassForm');
+  const changePassError = document.getElementById('changePassError');
+  changePassForm.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    clearError(changePassError);
+    const oldpass = document.getElementById('oldPassword').value;
+    const newpass = document.getElementById('newPassword').value;
+    const confirm = document.getElementById('confirmPassword').value;
+    if (newpass !== confirm) { showError(changePassError, "New passwords don't match."); return; }
+    if (newpass.length < 4) { showError(changePassError, 'Password too short (4 char minimum)'); return; }
+    const btn = document.getElementById('changePassBtn');
+    setLoading(btn, true);
+    const res = await api('/changepass', { method: 'POST', params: { token: state.token }, body: { oldpass: oldpass, newpass: newpass } });
+    setLoading(btn, false);
+    if (res.ok) {
+      changePassForm.reset();
+      toast('Password updated.', 'success');
+    } else {
+      showError(changePassError, errText(res, 'Could not update your password.'));
+    }
+  });
+
+})();
+</script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-from flask import Flask, request, Response, send_file
+from flask import Flask, request, Response, send_file, render_template
 from flask_cors import CORS
 from tinydb import TinyDB, Query
 import uuid as u
@@ -89,6 +89,8 @@ def updatebio():
 @app.get("/user")
 def user():
     User = Query()
+    path = os.path.join(BASE_DIR, "users.json")
+    db = TinyDB(path)
     userget = request.args.get("user")
     result = db.search(User.username == userget) or db.search(User.userid == userget)
     if result:
@@ -235,6 +237,10 @@ def getpfp():
 
     else:
         return "User not found", 404
+
+@app.route('/client')
+def client():
+    return render_template('client.html')
 
 portuse = 5613
 print(f"Running on port {portuse}")

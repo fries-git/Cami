@@ -2,5 +2,4 @@
 test.py
 *.cpy
 *.pyc
-*.html
 servers/uploads/
