@@ -1,7 +1,7 @@
-# Cami
+# Cami ![88x31 GIF](images/cami8831.gif)  
 
-> *A simple, silly, and lightweight http only authentication service.*
-
+> *A simple, silly, and lightweight http only authentication service made by someone with no experience.*
+  
 Features:\
 Register an account\
 Login with the account\
