@@ -11,12 +11,12 @@ For developers read `/docs` for how to interact with the project.
 <img width="504" height="296" alt="image" src="https://github.com/user-attachments/assets/aa012b60-ed97-437a-b46a-609afdb0b574" />
 
 Features:\
-TinyDB Databases for long term fiel storage.\
+TinyDB Databases for long term file storage.\
 SHA256 hashing to secure passwords.\
 Designed to be easy to use in other projects, even if not running the server locally.\
 Register an account.\
 Login with the account.\
-Wow tokens are implemented for things, that are temporary, and change on login.\
+Tokens are implemented for things that are temporary, and change on login.\
 Set a custom bio.\
 Get information about a user from username.\
 Get information about a user from id.\
@@ -26,7 +26,7 @@ PFPs.\
 
 W.I.P.  
 Live chatting over websocket connections!  
-Image library smiilar to like Tenor but for pngs/jpgs.  
+Image library similar to like Tenor but for pngs/jpgs.  
 Music library where people can upload mp3s and get them back to play them.  
 
 To run locally:  
