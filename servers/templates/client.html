@@ -1,1133 +1,885 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cami</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #0a0b0d;
-    --surface: #131519;
-    --surface-2: #1a1d22;
-    --surface-3: #21252b;
-    --border: #262a31;
-    --border-soft: #1c1f24;
-    --text: #e8eaed;
-    --text-dim: #9199a3;
-    --text-faint: #565d67;
-    --accent: #4f7cff;
-    --accent-hover: #6690ff;
-    --accent-soft: rgba(79,124,255,0.13);
-    --success: #35c98c;
-    --success-soft: rgba(53,201,140,0.12);
-    --danger: #ef5a5a;
-    --danger-soft: rgba(239,90,90,0.12);
-    --warm: #e8a33d;
-    --radius-sm: 6px;
-    --radius: 10px;
-    --radius-lg: 18px;
-    --font-display: 'Space Grotesk', system-ui, sans-serif;
-    --font-body: 'Inter', system-ui, -apple-system, sans-serif;
-    --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', monospace;
-    --shadow-lg: 0 20px 60px rgba(0,0,0,0.45);
-    --shadow-sm: 0 2px 10px rgba(0,0,0,0.25);
+  :root{
+    --paper:#FBF3E7;
+    --paper-dark:#F1E4CE;
+    --ink:#2A2420;
+    --ink-soft:#6b6154;
+    --mustard:#E3A63E;
+    --mustard-dark:#C9862A;
+    --ketchup:#C1442E;
+    --mint:#5F9E80;
+    --line:#DCCFB4;
+    --shadow:0 2px 0 rgba(42,36,32,0.06), 0 8px 20px -12px rgba(42,36,32,0.25);
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(circle at 1px 1px, rgba(42,36,32,0.06) 1px, transparent 0) 0 0/22px 22px,
+      var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.display{ font-family:'Space Grotesk',sans-serif; letter-spacing:-0.01em; }
+  .mono{ font-family:'IBM Plex Mono',monospace; }
+  button{ font-family:inherit; cursor:pointer; }
+  input,textarea{ font-family:inherit; }
+  a{ color:var(--ketchup); }
+  ::selection{ background:var(--mustard); color:var(--ink); }
+  :focus-visible{ outline:2px solid var(--ketchup); outline-offset:2px; }
+
+  /* ---------- layout shells ---------- */
+  #app{ min-height:100vh; display:flex; flex-direction:column; }
+
+  .center-shell{
+    flex:1; display:flex; align-items:center; justify-content:center; padding:24px;
   }
 
-  * { box-sizing: border-box; }
-  html, body { height: 100%; }
-  body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--font-body);
-    font-size: 14px;
-    line-height: 1.5;
-    -webkit-font-smoothing: antialiased;
+  .brandmark{ display:flex; align-items:center; gap:10px; }
+  .brandmark .dot{
+    width:14px;height:14px;border-radius:50%;
+    background:var(--mustard); border:2px solid var(--ink);
   }
-  h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.02em; margin: 0; }
-  p { margin: 0; }
-  button, input, textarea { font-family: inherit; color: inherit; }
-  button { cursor: pointer; }
-  ::selection { background: var(--accent-soft); color: var(--text); }
-  ::-webkit-scrollbar { width: 10px; height: 10px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 8px; border: 2px solid var(--bg); }
-  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
-  [hidden] { display: none !important; }
+  .brandmark span{ font-weight:700; font-size:22px; }
 
-  @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  /* ---------- auth card ---------- */
+  .auth-card{
+    width:100%; max-width:400px; background:var(--paper-dark);
+    border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow);
+    padding:28px 26px 24px;
   }
+  .auth-card p.tag{ color:var(--ink-soft); margin:4px 0 22px; font-size:14px; }
+  .tabswitch{ display:flex; gap:4px; background:var(--paper); border:1px solid var(--line); border-radius:8px; padding:3px; margin-bottom:20px; }
+  .tabswitch button{
+    flex:1; border:none; background:transparent; padding:8px 0; border-radius:6px;
+    font-weight:600; font-size:13.5px; color:var(--ink-soft);
+  }
+  .tabswitch button.active{ background:var(--ink); color:var(--paper); }
 
-  /* ---------- shared bits ---------- */
-  .brand { display: flex; align-items: center; gap: 10px; }
-  .brand-mark {
-    width: 30px; height: 30px; border-radius: 8px;
-    background: linear-gradient(155deg, var(--accent), #7f5cff);
-    display: flex; align-items: center; justify-content: center;
-    font-family: var(--font-display); font-weight: 700; font-size: 15px; color: #fff;
-    flex-shrink: 0;
+  label{ display:block; font-size:12.5px; font-weight:600; color:var(--ink-soft); margin:0 0 6px; text-transform:uppercase; letter-spacing:.04em; }
+  .field{ margin-bottom:14px; }
+  input[type=text],input[type=password],textarea,select{
+    width:100%; border:1px solid var(--line); background:var(--paper);
+    border-radius:7px; padding:10px 12px; font-size:14.5px; color:var(--ink);
   }
-  .brand-name { font-family: var(--font-display); font-weight: 600; font-size: 18px; letter-spacing: -0.01em; }
-  .brand.small .brand-mark { width: 26px; height: 26px; font-size: 13px; border-radius: 7px; }
-  .brand.small .brand-name { font-size: 16px; }
+  textarea{ resize:vertical; min-height:70px; }
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    border:none; border-radius:7px; padding:10px 16px; font-weight:600; font-size:14px;
+    background:var(--ink); color:var(--paper); width:100%;
+    box-shadow:0 2px 0 rgba(0,0,0,0.15);
+  }
+  .btn:disabled{ opacity:.45; cursor:not-allowed; }
+  .btn.secondary{ background:var(--paper); color:var(--ink); border:1px solid var(--line); box-shadow:none; }
+  .btn.accent{ background:var(--mustard-dark); }
+  .btn.danger{ background:var(--ketchup); }
+  .btn.small{ width:auto; padding:7px 12px; font-size:13px; }
+  .err-msg{ color:var(--ketchup); font-size:13px; margin-top:10px; min-height:16px; }
 
-  .btn {
-    font-family: var(--font-body); font-weight: 600; font-size: 13.5px;
-    padding: 10px 16px; border-radius: var(--radius-sm); border: 1px solid transparent;
-    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-    transition: background .15s ease, border-color .15s ease, transform .1s ease, opacity .15s ease;
-  }
-  .btn:active { transform: scale(0.98); }
-  .btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
-  .btn-primary { background: var(--accent); color: #fff; }
-  .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
-  .btn-secondary { background: var(--surface-2); color: var(--text); border-color: var(--border); }
-  .btn-secondary:hover:not(:disabled) { background: var(--surface-3); }
-  .btn-danger { background: transparent; color: var(--danger); border-color: rgba(239,90,90,0.35); }
-  .btn-danger:hover:not(:disabled) { background: var(--danger-soft); }
-  .btn-block { width: 100%; }
-  .btn-sm { padding: 7px 12px; font-size: 12.5px; }
-  .icon-btn {
-    width: 34px; height: 34px; border-radius: var(--radius-sm); background: transparent; border: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: center; color: var(--text-dim);
-    transition: background .15s ease, color .15s ease, border-color .15s ease;
-  }
-  .icon-btn:hover { background: var(--surface-2); color: var(--text); border-color: var(--border); }
-  .icon-btn svg { width: 16px; height: 16px; }
-
-  .spinner {
-    width: 15px; height: 15px; border-radius: 50%;
-    border: 2px solid rgba(255,255,255,0.35); border-top-color: #fff;
-    animation: spin .7s linear infinite;
-  }
-  .btn-secondary .spinner, .btn-danger .spinner { border-color: var(--border); border-top-color: var(--text-dim); }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  .field-hint { font-size: 12px; color: var(--text-faint); margin-top: -4px; }
-  .form-error {
-    font-size: 12.5px; color: var(--danger); min-height: 0; display: none;
-    background: var(--danger-soft); border: 1px solid rgba(239,90,90,0.25); border-radius: var(--radius-sm);
-    padding: 8px 10px;
-  }
-  .form-error.visible { display: block; }
-
-  .avatar {
-    display: inline-flex; border-radius: 50%; overflow: hidden; background: var(--surface-3);
-    flex-shrink: 0; position: relative;
-  }
-  .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .avatar-sm { width: 32px; height: 32px; }
-  .avatar-md { width: 44px; height: 44px; }
-  .avatar-lg { width: 64px; height: 64px; }
-  .avatar-xl { width: 92px; height: 92px; }
-  .avatar.uploading::after {
-    content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.55);
-    border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%;
-    animation: spin .7s linear infinite;
-  }
-
-  .empty-state {
-    text-align: center; padding: 56px 24px; color: var(--text-dim);
-    border: 1px dashed var(--border); border-radius: var(--radius-lg);
-  }
-  .empty-state p { font-family: var(--font-display); font-weight: 600; font-size: 15px; color: var(--text); margin-bottom: 4px; }
-  .empty-state span { font-size: 13px; }
-
-  .fries-icon { width: 14px; height: 14px; color: var(--warm); vertical-align: -2px; }
-
-  /* ---------- toasts ---------- */
-  .toast-container {
-    position: fixed; top: 18px; right: 18px; z-index: 200;
-    display: flex; flex-direction: column; gap: 8px; max-width: 340px;
-  }
-  .toast {
-    background: var(--surface-2); border: 1px solid var(--border); border-left: 3px solid var(--accent);
-    border-radius: var(--radius-sm); padding: 11px 14px; font-size: 13px; box-shadow: var(--shadow-sm);
-    animation: toastIn .2s ease both; display: flex; align-items: flex-start; gap: 10px;
-  }
-  .toast.success { border-left-color: var(--success); }
-  .toast.error { border-left-color: var(--danger); }
-  .toast-msg { flex: 1; }
-  .toast-close { background: none; border: none; color: var(--text-faint); font-size: 15px; line-height: 1; padding: 0; }
-  @keyframes toastIn { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: translateX(0); } }
-
-  /* ---------- auth screen ---------- */
-  .auth-screen {
-    min-height: 100vh; display: flex; align-items: center; justify-content: center; position: relative;
-    padding: 24px; overflow: hidden;
-  }
-  .auth-screen::before {
-    content: ''; position: absolute; inset: 0;
-    background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px);
-    background-size: 26px 26px; mask-image: radial-gradient(circle at 50% 35%, black, transparent 70%);
-  }
-  .auth-screen::after {
-    content: ''; position: absolute; top: 10%; left: 50%; width: 560px; height: 560px; transform: translateX(-50%);
-    background: radial-gradient(circle, var(--accent-soft), transparent 65%); pointer-events: none;
-  }
-  .auth-content { position: relative; z-index: 1; width: 100%; max-width: 380px; animation: authIn .4s ease both; }
-  @keyframes authIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-  .auth-content .brand { justify-content: center; margin-bottom: 10px; }
-  .auth-tagline { text-align: center; color: var(--text-dim); font-size: 13.5px; margin-bottom: 28px; }
-  .auth-card {
-    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
-    padding: 6px; box-shadow: var(--shadow-lg);
-  }
-  .auth-tabs { display: flex; gap: 4px; padding: 6px 6px 0; }
-  .auth-tab {
-    flex: 1; background: none; border: none; padding: 10px 8px; font-size: 13px; font-weight: 600;
-    color: var(--text-faint); border-radius: var(--radius-sm); transition: color .15s ease, background .15s ease;
-  }
-  .auth-tab.active { color: var(--text); background: var(--surface-2); }
-  .auth-form { padding: 22px 20px 20px; display: flex; flex-direction: column; gap: 14px; }
-  .auth-form label { display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--text-dim); }
-  .auth-form input[type="text"], .auth-form input[type="password"] {
-    background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm);
-    padding: 10px 12px; font-size: 14px; color: var(--text); transition: border-color .15s ease;
-  }
-  .auth-form input:focus { border-color: var(--accent); outline: none; }
-  .password-field { position: relative; display: flex; }
-  .password-field input { flex: 1; padding-right: 40px; }
-  .pw-toggle {
-    position: absolute; right: 4px; top: 4px; bottom: 4px; width: 32px; background: none; border: none;
-    color: var(--text-faint); display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm);
-  }
-  .pw-toggle:hover { color: var(--text-dim); }
-  .pw-toggle svg { width: 16px; height: 16px; }
+  details.adv{ margin-top:16px; border-top:1px dashed var(--line); padding-top:12px; }
+  details.adv summary{ cursor:pointer; font-size:12.5px; color:var(--ink-soft); font-weight:600; }
+  details.adv .field{ margin-top:10px; }
 
   /* ---------- app shell ---------- */
-  .app-shell { display: flex; min-height: 100vh; }
-  .sidebar {
-    width: 236px; flex-shrink: 0; background: var(--surface); border-right: 1px solid var(--border);
-    display: flex; flex-direction: column; justify-content: space-between; padding: 20px 14px;
-    position: sticky; top: 0; height: 100vh;
+  .shell{ display:flex; flex:1; min-height:100vh; }
+  .sidebar{
+    width:268px; flex-shrink:0; background:var(--paper-dark); border-right:1px solid var(--line);
+    display:flex; flex-direction:column; padding:20px 16px;
   }
-  .nav { display: flex; flex-direction: column; gap: 2px; margin-top: 28px; }
-  .nav-item {
-    display: flex; align-items: center; gap: 11px; padding: 10px 12px; border-radius: var(--radius-sm);
-    background: none; border: none; color: var(--text-dim); font-size: 13.5px; font-weight: 500; text-align: left;
-    transition: background .15s ease, color .15s ease;
-  }
-  .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
-  .nav-item:hover { background: var(--surface-2); color: var(--text); }
-  .nav-item.active { background: var(--accent-soft); color: var(--accent); }
-  .sidebar-bottom { display: flex; align-items: center; gap: 8px; }
-  .sidebar-user {
-    flex: 1; display: flex; align-items: center; gap: 10px; background: none; border: 1px solid transparent;
-    border-radius: var(--radius-sm); padding: 6px; text-align: left; min-width: 0;
-    transition: background .15s ease;
-  }
-  .sidebar-user:hover { background: var(--surface-2); }
-  .sidebar-user-info { min-width: 0; display: flex; flex-direction: column; }
-  .sidebar-username { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .sidebar-role { font-size: 11px; color: var(--text-faint); }
+  .sidebar .brandmark{ padding:0 4px 18px; }
 
-  .main { flex: 1; min-width: 0; }
-  .page { max-width: 700px; margin: 0 auto; padding: 44px 32px 80px; }
-  .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; gap: 12px; }
-  .page-header h1 { font-size: 22px; }
-
-  /* feed */
-  .compose { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 14px; margin-bottom: 28px; }
-  .compose textarea {
-    width: 100%; resize: none; min-height: 64px; background: none; border: none; color: var(--text);
-    font-size: 14.5px; line-height: 1.5; font-family: var(--font-body); outline: none;
+  .profile-ticket{
+    position:relative; background:var(--paper); border:1px solid var(--line); border-radius:8px;
+    padding:16px 14px 20px; margin-bottom:18px;
   }
-  .compose textarea::placeholder { color: var(--text-faint); }
-  .compose-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 6px; padding-top: 10px; border-top: 1px solid var(--border-soft); }
-  .compose-count { font-size: 12px; color: var(--text-faint); font-family: var(--font-mono); }
-  .compose-count.warning { color: var(--warm); }
-  .compose .form-error { margin-top: 10px; }
-
-  .feed-list { display: flex; flex-direction: column; gap: 10px; }
-  .post-card {
-    display: flex; gap: 12px; padding: 16px; background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
+  .profile-ticket::after{
+    content:""; position:absolute; left:0; right:0; bottom:-7px; height:14px;
+    background:
+      linear-gradient(-45deg, var(--paper-dark) 7px, transparent 0) 0 0/14px 14px repeat-x,
+      linear-gradient(45deg, var(--paper-dark) 7px, transparent 0) 0 0/14px 14px repeat-x;
   }
-  .post-body { min-width: 0; flex: 1; }
-  .post-meta { display: flex; align-items: baseline; gap: 6px; margin-bottom: 4px; }
-  .post-author { background: none; border: none; padding: 0; font-weight: 600; font-size: 13.5px; color: var(--text); }
-  .post-author:hover { color: var(--accent); }
-  .post-dot { color: var(--text-faint); font-size: 12px; }
-  .post-time { font-size: 12px; color: var(--text-faint); font-family: var(--font-mono); }
-  .post-text { font-size: 14.5px; line-height: 1.55; color: var(--text); word-wrap: break-word; white-space: pre-wrap; }
-  @keyframes fadeInUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-  .card-enter { animation: fadeInUp .25s ease both; }
-
-  #loadMoreBtn { margin-top: 14px; }
-
-  /* explore */
-  .search-box { display: flex; gap: 8px; }
-  .search-box input {
-    background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm);
-    padding: 8px 12px; font-size: 13px; color: var(--text); width: 220px;
-  }
-  .search-box input:focus { border-color: var(--accent); outline: none; }
-  .users-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
-  .user-card {
-    display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 20px 12px;
-    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
-    transition: border-color .15s ease, transform .1s ease;
-  }
-  .user-card:hover { border-color: var(--accent); transform: translateY(-2px); }
-  .user-card-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-  .grid-loading, .modal-loading { color: var(--text-faint); font-size: 13px; padding: 20px; text-align: center; }
-
-  /* profile */
-  .profile-card {
-    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 28px;
-  }
-  .profile-top { display: flex; align-items: center; gap: 18px; margin-bottom: 22px; }
-  .avatar-upload-wrap { position: relative; cursor: pointer; border-radius: 50%; }
-  .avatar-upload-wrap::after {
-    content: ''; position: absolute; inset: 0; border-radius: 50%; background: rgba(0,0,0,0.5);
-    opacity: 0; transition: opacity .15s ease;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.8'><path d='M4 8h3l2-3h6l2 3h3v11H4z'/><circle cx='12' cy='13' r='3.3'/></svg>");
-    background-repeat: no-repeat; background-position: center; background-size: 22px;
-  }
-  .avatar-upload-wrap:hover::after { opacity: 1; }
-  .profile-names { min-width: 0; }
-  .profile-names h2 { font-size: 19px; margin-bottom: 3px; }
-  .profile-usernum { font-size: 12.5px; color: var(--text-faint); font-family: var(--font-mono); }
-
-  .bio-block { margin-bottom: 22px; }
-  .bio-label-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-  .bio-label-row span { font-size: 11.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-faint); }
-  .bio-text { font-size: 14px; color: var(--text-dim); line-height: 1.55; white-space: pre-wrap; }
-  .bio-edit-btn { background: none; border: none; color: var(--accent); font-size: 12.5px; font-weight: 600; padding: 2px; }
-  .bio-editor { display: flex; flex-direction: column; gap: 8px; }
-  .bio-editor textarea {
-    width: 100%; min-height: 80px; resize: vertical; background: var(--surface-2); border: 1px solid var(--border);
-    border-radius: var(--radius-sm); padding: 10px 12px; color: var(--text); font-size: 14px; font-family: var(--font-body);
-  }
-  .bio-editor textarea:focus { border-color: var(--accent); outline: none; }
-  .bio-editor-footer { display: flex; align-items: center; justify-content: space-between; }
-
-  .stat-row { display: flex; gap: 10px; margin-bottom: 18px; }
-  .stat {
-    flex: 1; background: var(--surface-2); border: 1px solid var(--border-soft); border-radius: var(--radius);
-    padding: 12px 14px; display: flex; flex-direction: column; gap: 4px;
-  }
-  .stat-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-faint); display: flex; align-items: center; gap: 5px; }
-  .stat-value { font-family: var(--font-display); font-size: 18px; font-weight: 600; }
-
-  .id-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; background: var(--surface-2); border-radius: var(--radius); border: 1px solid var(--border-soft); }
-  .id-label { font-size: 11.5px; color: var(--text-faint); font-weight: 600; }
-  .id-value { font-family: var(--font-mono); font-size: 12.5px; color: var(--text-dim); }
-
-  /* settings */
-  .settings-card {
-    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
-    padding: 24px; margin-bottom: 16px;
-  }
-  .settings-card h2 { font-size: 15px; margin-bottom: 4px; }
-  .settings-card .desc { font-size: 12.5px; color: var(--text-faint); margin-bottom: 18px; }
-  .settings-form { display: flex; flex-direction: column; gap: 12px; max-width: 340px; }
-  .settings-form label { display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--text-dim); }
-  .settings-form input {
-    background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm);
-    padding: 9px 12px; font-size: 13.5px; color: var(--text);
-  }
-  .settings-form input:focus { border-color: var(--accent); outline: none; }
-  .token-row { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
-  .token-display {
-    flex: 1; background: var(--surface-2); border: 1px solid var(--border-soft); border-radius: var(--radius-sm);
-    padding: 10px 12px; font-family: var(--font-mono); font-size: 12.5px; color: var(--text-dim);
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  .profile-top{ display:flex; align-items:center; gap:10px; }
+  .pfp-img{ width:46px;height:46px;border-radius:50%; object-fit:cover; border:2px solid var(--ink); background:var(--mustard); flex-shrink:0; }
+  .pfp-img.lg{ width:84px; height:84px; }
+  .profile-names .uname{ font-weight:700; font-size:15px; line-height:1.15; }
+  .profile-names .unum{ font-size:11.5px; color:var(--ink-soft); }
+  .profile-bio{ font-size:12.5px; color:var(--ink-soft); margin:10px 0 8px; line-height:1.4; }
+  .fries-badge{
+    display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:600;
+    background:var(--paper-dark); border:1px dashed var(--mustard-dark); border-radius:20px; padding:3px 10px;
   }
 
-  /* modal */
-  .modal-overlay {
-    position: fixed; inset: 0; background: rgba(5,6,8,0.7); backdrop-filter: blur(2px);
-    display: flex; align-items: center; justify-content: center; z-index: 150; padding: 20px;
-    animation: fadeInUp .15s ease both;
+  nav.tabs{ display:flex; flex-direction:column; gap:2px; margin-top:4px; }
+  nav.tabs button{
+    display:flex; align-items:center; gap:10px; text-align:left; border:none; background:transparent;
+    padding:9px 10px; border-radius:7px; font-size:14px; font-weight:600; color:var(--ink-soft);
   }
-  .modal {
-    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
-    width: 100%; max-width: 360px; padding: 26px; position: relative; box-shadow: var(--shadow-lg);
-  }
-  .modal-close { position: absolute; top: 14px; right: 14px; background: none; border: none; color: var(--text-faint); font-size: 20px; line-height: 1; padding: 4px; }
-  .modal-close:hover { color: var(--text); }
-  .modal-profile { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px; }
-  .modal-profile .avatar { margin-bottom: 10px; }
-  .modal-profile h2 { font-size: 17px; }
-  .modal-bio { font-size: 13px; color: var(--text-dim); margin: 8px 0 18px; line-height: 1.5; }
-  .modal-profile .stat-row, .modal-profile .id-row { width: 100%; }
-  .modal-profile .stat-row { margin-bottom: 10px; }
+  nav.tabs button:hover{ background:var(--paper); }
+  nav.tabs button.active{ background:var(--ink); color:var(--paper); }
+  nav.tabs .ico{ width:18px; text-align:center; }
 
-  /* mobile */
-  @media (max-width: 760px) {
-    .app-shell { flex-direction: column; }
-    .sidebar {
-      position: fixed; top: auto; bottom: 0; left: 0; right: 0; height: auto; width: 100%;
-      flex-direction: row; align-items: center; justify-content: space-between; padding: 8px 14px;
-      border-right: none; border-top: 1px solid var(--border); z-index: 60;
-    }
-    .sidebar-top { display: flex; align-items: center; gap: 18px; }
-    .sidebar-top .brand { display: none; }
-    .nav { flex-direction: row; margin-top: 0; gap: 2px; }
-    .nav-item span { display: none; }
-    .nav-item { padding: 9px; }
-    .sidebar-bottom { gap: 6px; }
-    .sidebar-user-info { display: none; }
-    .main { padding-bottom: 70px; }
-    .page { padding: 28px 16px 40px; }
-    .search-box input { width: 140px; }
+  .sidebar-foot{ margin-top:auto; padding-top:14px; border-top:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; }
+  .ws-status{ display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--ink-soft); }
+  .ws-dot{ width:8px;height:8px;border-radius:50%; background:var(--ketchup); }
+  .ws-dot.on{ background:var(--mint); }
+
+  .main{ flex:1; min-width:0; display:flex; flex-direction:column; }
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between; padding:18px 28px;
+    border-bottom:1px solid var(--line);
+  }
+  .topbar h1{ font-size:20px; margin:0; }
+  .view{ flex:1; padding:24px 28px 40px; overflow-y:auto; }
+
+  /* ---------- toast ---------- */
+  #toast{
+    position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(10px);
+    background:var(--ink); color:var(--paper); padding:10px 18px; border-radius:8px;
+    font-size:13.5px; opacity:0; pointer-events:none; transition:opacity .2s, transform .2s; z-index:200;
+    box-shadow:var(--shadow); max-width:80vw;
+  }
+  #toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+  #toast.err{ background:var(--ketchup); }
+
+  /* ---------- feed ---------- */
+  .composer{
+    background:var(--paper-dark); border:1px solid var(--line); border-radius:var(--radius);
+    padding:16px; margin-bottom:22px;
+  }
+  .composer-foot{ display:flex; align-items:center; justify-content:space-between; margin-top:8px; }
+  .char-count{ font-size:11.5px; color:var(--ink-soft); }
+  .char-count.bad{ color:var(--ketchup); }
+
+  .ticket{
+    position:relative; background:var(--paper-dark); border:1px solid var(--line); border-radius:8px;
+    padding:16px 18px 22px; margin-bottom:22px; transition:transform .15s;
+  }
+  .ticket:hover{ transform:rotate(-.3deg); }
+  .ticket::after{
+    content:""; position:absolute; left:0; right:0; bottom:-8px; height:16px;
+    background:
+      linear-gradient(-45deg, var(--paper) 8px, transparent 0) 0 0/16px 16px repeat-x,
+      linear-gradient(45deg, var(--paper) 8px, transparent 0) 0 0/16px 16px repeat-x;
+  }
+  .ticket-head{ display:flex; align-items:center; gap:10px; padding-bottom:10px; border-bottom:1px dashed var(--line); margin-bottom:10px; }
+  .ticket-head .pfp-img{ width:30px;height:30px; }
+  .ticket-head .who{ font-weight:600; font-size:13.5px; }
+  .ticket-head .when{ font-size:11px; color:var(--ink-soft); margin-left:auto; }
+  .ticket-order{ font-size:10.5px; color:var(--ink-soft); }
+  .ticket-body{ font-size:14.5px; line-height:1.5; white-space:pre-wrap; word-break:break-word; }
+
+  .empty-state{ text-align:center; padding:60px 20px; color:var(--ink-soft); }
+  .empty-state .glyph{ font-size:30px; margin-bottom:8px; }
+
+  /* ---------- users ---------- */
+  .user-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:12px; }
+  .user-chip{
+    display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center;
+    background:var(--paper-dark); border:1px solid var(--line); border-radius:8px; padding:16px 10px;
+    border:none; font-size:13.5px; font-weight:600; color:var(--ink);
+  }
+  .user-chip:hover{ background:var(--paper); }
+  .user-chip .pfp-img{ width:52px;height:52px; }
+
+  /* ---------- modal ---------- */
+  .modal-backdrop{
+    position:fixed; inset:0; background:rgba(42,36,32,0.45); display:flex; align-items:center; justify-content:center;
+    padding:20px; z-index:150;
+  }
+  .modal{
+    background:var(--paper); border-radius:var(--radius); border:1px solid var(--line); box-shadow:var(--shadow);
+    width:100%; max-width:360px; padding:22px; text-align:center; position:relative;
+  }
+  .modal .close-x{ position:absolute; top:10px; right:12px; background:none; border:none; font-size:18px; color:var(--ink-soft); }
+  .modal .uname{ font-size:18px; font-weight:700; margin:12px 0 2px; }
+  .modal .unum{ font-size:12px; color:var(--ink-soft); margin-bottom:14px; }
+  .modal .bio{ font-size:13.5px; color:var(--ink); background:var(--paper-dark); border-radius:7px; padding:10px 12px; margin-bottom:12px; text-align:left; }
+
+  /* ---------- chat ---------- */
+  .chat-shell{ display:flex; flex-direction:column; height:calc(100vh - 130px); max-height:720px; }
+  .chan-row{ display:flex; gap:8px; align-items:flex-end; margin-bottom:14px; flex-wrap:wrap; }
+  .chan-row .field{ margin:0; }
+  .chan-row .field.grow{ flex:1; min-width:140px; }
+  .chan-badge{ font-size:12px; color:var(--ink-soft); margin-bottom:10px; }
+  .chan-badge b{ color:var(--ink); }
+
+  .chat-log{
+    flex:1; overflow-y:auto; background:var(--paper-dark); border:1px solid var(--line); border-radius:var(--radius);
+    padding:16px; display:flex; flex-direction:column; gap:10px;
+  }
+  .msg-row{ display:flex; }
+  .msg-row.mine{ justify-content:flex-end; }
+  .bubble{
+    max-width:70%; background:var(--paper); border:1px solid var(--line); border-radius:10px 10px 10px 3px;
+    padding:8px 12px; font-size:14px;
+  }
+  .msg-row.mine .bubble{ background:var(--mustard); border-color:var(--mustard-dark); border-radius:10px 10px 3px 10px; }
+  .bubble .who{ font-size:11px; font-weight:700; color:var(--ink-soft); margin-bottom:2px; }
+  .msg-row.mine .bubble .who{ color:rgba(42,36,32,0.6); }
+  .sys-row{ align-self:center; font-size:11.5px; color:var(--ink-soft); background:var(--paper); border:1px dashed var(--line); border-radius:20px; padding:3px 12px; }
+
+  .chat-input-row{ display:flex; gap:8px; margin-top:12px; }
+  .chat-input-row input{ flex:1; }
+
+  /* ---------- settings ---------- */
+  .settings-grid{ display:grid; gap:20px; max-width:520px; }
+  .settings-card{ background:var(--paper-dark); border:1px solid var(--line); border-radius:var(--radius); padding:18px 20px; }
+  .settings-card h3{ margin:0 0 4px; font-size:15px; }
+  .settings-card .hint{ font-size:12px; color:var(--ink-soft); margin:0 0 14px; }
+  .row2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+
+  @media (max-width:760px){
+    .shell{ flex-direction:column; }
+    .sidebar{ width:100%; flex-direction:row; flex-wrap:wrap; align-items:center; padding:14px; }
+    .sidebar .brandmark{ padding:0; width:100%; margin-bottom:10px; }
+    .profile-ticket{ width:100%; }
+    nav.tabs{ flex-direction:row; width:100%; overflow-x:auto; }
+    .sidebar-foot{ width:100%; }
+    .view{ padding:18px; }
+    .chat-shell{ height:calc(100vh - 260px); }
   }
 </style>
 </head>
 <body>
-
-<div id="toastContainer" class="toast-container"></div>
-
-<!-- ============ AUTH SCREEN ============ -->
-<div id="authScreen" class="auth-screen">
-  <div class="auth-content">
-    <div class="brand">
-      <span class="brand-mark">C</span>
-      <span class="brand-name">Cami</span>
-    </div>
-    <p class="auth-tagline">Minimal, session-based social.</p>
-
-    <div class="auth-card">
-      <div class="auth-tabs">
-        <button type="button" class="auth-tab active" data-tab="login">Log in</button>
-        <button type="button" class="auth-tab" data-tab="register">Create account</button>
-      </div>
-
-      <form id="loginForm" class="auth-form">
-        <label>Username
-          <input type="text" id="loginUsername" autocomplete="username" required />
-        </label>
-        <label>Password
-          <div class="password-field">
-            <input type="password" id="loginPassword" autocomplete="current-password" required />
-            <button type="button" class="pw-toggle" data-target="loginPassword" aria-label="Show password">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
-            </button>
-          </div>
-        </label>
-        <div class="form-error" id="loginError"></div>
-        <button type="submit" class="btn btn-primary btn-block" id="loginSubmitBtn">
-          <span class="btn-label">Log in</span>
-          <span class="spinner" hidden></span>
-        </button>
-      </form>
-
-      <form id="registerForm" class="auth-form" hidden>
-        <label>Username
-          <input type="text" id="registerUsername" minlength="4" autocomplete="username" required />
-        </label>
-        <label>Password
-          <div class="password-field">
-            <input type="password" id="registerPassword" minlength="4" autocomplete="new-password" required />
-            <button type="button" class="pw-toggle" data-target="registerPassword" aria-label="Show password">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
-            </button>
-          </div>
-        </label>
-        <p class="field-hint">4 characters minimum for both fields.</p>
-        <div class="form-error" id="registerError"></div>
-        <button type="submit" class="btn btn-primary btn-block" id="registerSubmitBtn">
-          <span class="btn-label">Create account</span>
-          <span class="spinner" hidden></span>
-        </button>
-      </form>
-    </div>
-  </div>
-</div>
-
-<!-- ============ APP SHELL ============ -->
-<div id="appShell" class="app-shell" hidden>
-  <aside class="sidebar">
-    <div class="sidebar-top" style="display:flex; flex-direction:column; width:100%;">
-      <div class="brand small">
-        <span class="brand-mark">C</span>
-        <span class="brand-name">Cami</span>
-      </div>
-      <nav class="nav">
-        <button class="nav-item active" data-page="feed">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
-          <span>Feed</span>
-        </button>
-        <button class="nav-item" data-page="explore">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>
-          <span>Explore</span>
-        </button>
-        <button class="nav-item" data-page="profile">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1-4 4-6 7-6s6 2 7 6"/></svg>
-          <span>Profile</span>
-        </button>
-        <button class="nav-item" data-page="settings">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 13a7.9 7.9 0 000-2l2-1.5-2-3.4-2.3.9a8 8 0 00-1.7-1l-.4-2.4h-4l-.4 2.4a8 8 0 00-1.7 1l-2.3-.9-2 3.4L6.6 11a7.9 7.9 0 000 2l-2 1.5 2 3.4 2.3-.9c.5.4 1.1.8 1.7 1l.4 2.4h4l.4-2.4a8 8 0 001.7-1l2.3.9 2-3.4z"/></svg>
-          <span>Settings</span>
-        </button>
-      </nav>
-    </div>
-    <div class="sidebar-bottom">
-      <button class="sidebar-user" data-page="profile" id="sidebarUserBtn">
-        <span id="sidebarAvatarWrap"></span>
-        <div class="sidebar-user-info">
-          <span id="sidebarUsername" class="sidebar-username">—</span>
-          <span class="sidebar-role">Member</span>
-        </div>
-      </button>
-      <button class="icon-btn" id="logoutBtn" aria-label="Log out" title="Log out">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
-      </button>
-    </div>
-  </aside>
-
-  <main class="main">
-
-    <!-- FEED -->
-    <section class="page" data-page="feed">
-      <header class="page-header">
-        <h1>Feed</h1>
-        <button class="btn btn-secondary btn-sm" id="refreshFeedBtn">Refresh</button>
-      </header>
-
-      <form id="composeForm" class="compose">
-        <textarea id="composeBody" maxlength="200" placeholder="Share something (10–200 characters)"></textarea>
-        <div class="compose-footer">
-          <span id="composeCount" class="compose-count">0 / 200</span>
-          <button type="submit" class="btn btn-primary btn-sm" id="composeSubmit" disabled>
-            <span class="btn-label">Post</span>
-            <span class="spinner" hidden></span>
-          </button>
-        </div>
-        <div class="form-error" id="composeError"></div>
-      </form>
-
-      <div id="feedList" class="feed-list"></div>
-      <div id="feedEmpty" class="empty-state" hidden>
-        <p>Nothing here yet</p>
-        <span>Posts from everyone on Cami will show up here once someone shares something.</span>
-      </div>
-      <button id="loadMoreBtn" class="btn btn-secondary btn-block" hidden>Load more</button>
-    </section>
-
-    <!-- EXPLORE -->
-    <section class="page" data-page="explore" hidden>
-      <header class="page-header">
-        <h1>Explore</h1>
-        <div class="search-box">
-          <input type="text" id="userSearch" placeholder="Find by username or ID" />
-          <button class="btn btn-secondary btn-sm" id="userSearchBtn">Search</button>
-        </div>
-      </header>
-      <div id="usersGrid" class="users-grid"></div>
-    </section>
-
-    <!-- PROFILE -->
-    <section class="page" data-page="profile" hidden>
-      <header class="page-header"><h1>Profile</h1></header>
-
-      <div class="profile-card">
-        <div class="profile-top">
-          <div class="avatar-upload-wrap" id="avatarUploadWrap">
-            <span id="profileAvatarWrap"></span>
-          </div>
-          <input type="file" id="avatarUploadInput" accept="image/png,image/jpeg,image/webp" hidden />
-          <div class="profile-names">
-            <h2 id="profileUsernameEl">—</h2>
-            <span class="profile-usernum" id="profileUsernumEl">—</span>
-          </div>
-        </div>
-
-        <div class="bio-block">
-          <div class="bio-label-row">
-            <span>Bio</span>
-            <button class="bio-edit-btn" id="bioEditBtn">Edit</button>
-          </div>
-          <p class="bio-text" id="bioDisplay"></p>
-          <div class="bio-editor" id="bioEditor" hidden>
-            <textarea id="bioTextarea" maxlength="200"></textarea>
-            <div class="bio-editor-footer">
-              <span class="compose-count" id="bioCount">0 / 200</span>
-              <div style="display:flex; gap:8px;">
-                <button class="btn btn-secondary btn-sm" id="bioCancelBtn" type="button">Cancel</button>
-                <button class="btn btn-primary btn-sm" id="bioSaveBtn" type="button">
-                  <span class="btn-label">Save</span>
-                  <span class="spinner" hidden></span>
-                </button>
-              </div>
-            </div>
-            <div class="form-error" id="bioError"></div>
-          </div>
-        </div>
-
-        <div class="stat-row">
-          <div class="stat">
-            <span class="stat-label">Member</span>
-            <span class="stat-value" id="profileUsernumStat">—</span>
-          </div>
-          <div class="stat">
-            <span class="stat-label">
-              <svg class="fries-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 10L5 21h14l-1-11z"/><line x1="9" y1="4" x2="9" y2="11"/><line x1="12" y1="2" x2="12" y2="11"/><line x1="15" y1="4" x2="15" y2="11"/></svg>
-              Fries
-            </span>
-            <span class="stat-value" id="profileFriesEl">—</span>
-          </div>
-        </div>
-
-        <div class="id-row">
-          <span class="id-label">User ID</span>
-          <code class="id-value" id="profileUseridEl">—</code>
-        </div>
-      </div>
-    </section>
-
-    <!-- SETTINGS -->
-    <section class="page" data-page="settings" hidden>
-      <header class="page-header"><h1>Settings</h1></header>
-
-      <div class="settings-card">
-        <h2>Change password</h2>
-        <p class="desc">You'll keep the same session — this only updates your password.</p>
-        <form id="changePassForm" class="settings-form">
-          <label>Current password
-            <input type="password" id="oldPassword" autocomplete="current-password" required />
-          </label>
-          <label>New password
-            <input type="password" id="newPassword" minlength="4" autocomplete="new-password" required />
-          </label>
-          <label>Confirm new password
-            <input type="password" id="confirmPassword" minlength="4" autocomplete="new-password" required />
-          </label>
-          <div class="form-error" id="changePassError"></div>
-          <button type="submit" class="btn btn-primary" id="changePassBtn" style="align-self:flex-start;">
-            <span class="btn-label">Update password</span>
-            <span class="spinner" hidden></span>
-          </button>
-        </form>
-      </div>
-
-      <div class="settings-card">
-        <h2>Session</h2>
-        <p class="desc">Your token authenticates every request this session makes. Anyone with it can act as you — keep it private. Logging in elsewhere replaces it.</p>
-        <div class="token-row">
-          <code class="token-display" id="tokenDisplay">••••••••••••••••••••••••••••••••</code>
-          <button class="icon-btn" id="tokenRevealBtn" aria-label="Show token">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
-          </button>
-          <button class="icon-btn" id="tokenCopyBtn" aria-label="Copy token">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-          </button>
-        </div>
-        <button class="btn btn-danger" id="logoutBtn2">Log out</button>
-      </div>
-    </section>
-
-  </main>
-</div>
-
-<!-- USER MODAL -->
-<div id="userModal" class="modal-overlay" hidden>
-  <div class="modal">
-    <button class="modal-close" id="userModalClose" aria-label="Close">&times;</button>
-    <div id="userModalContent"></div>
-  </div>
-</div>
+<div id="app"></div>
+<div id="toast" role="status" aria-live="polite"></div>
 
 <script>
-(function () {
-  "use strict";
+/* ============================================================
+   Cami client — talks to the REST API (auth/profile/feed/pfp)
+   and the websocket chat server, sharing one auth token.
+   ============================================================ */
 
-  const FALLBACK_AVATAR = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><rect width='40' height='40' fill='%231a1d22'/><circle cx='20' cy='16' r='7' fill='%23383e47'/><rect x='7' y='26' width='26' height='12' rx='6' fill='%23383e47'/></svg>";
-  let cacheBust = Date.now();
+function guessApiBase(){
+  return("https://cami.barfpile.dev")
+}
+function guessWsBase(){
+  return("wss://chat.barfpile.dev")
+}
 
-  const state = {
-    token: null,
-    me: null,
-    userCache: {},
-    feedOffset: 0,
-    feedCount: 15,
-    feedEnd: false,
+const state = {
+  apiBase: guessApiBase(),
+  wsBase: guessWsBase(),
+  token: null,
+  username: null,
+  profile: null,
+  ws: null,
+  wsConnected: false,
+  wsRetry: 0,
+  wsRetryTimer: null,
+  currentChannel: 'general',
+  currentChannelPassword: '',
+  userCache: {},   // key (username or userid) -> {username, userid, bio, usernum, fries}
+  posts: [],
+  postsOffset: 0,
+  postsExhausted: false,
+  activeTab: 'feed',
+};
+
+const root = document.getElementById('app');
+
+/* ---------------- helpers ---------------- */
+
+function toast(msg, isErr){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = isErr ? 'show err' : 'show';
+  clearTimeout(toast._t);
+  toast._t = setTimeout(()=> el.className = '', 2600);
+}
+
+async function api(path, opts={}){
+  const res = await fetch(state.apiBase + path, opts);
+  const text = await res.text();
+  let data = text;
+  try { data = JSON.parse(text); } catch(e){ /* plain text response */ }
+  if(!res.ok){
+    const msg = typeof data === 'string' ? data : (data.error || JSON.stringify(data));
+    throw new Error(msg || `Request failed (${res.status})`);
+  }
+  return data;
+}
+
+function timeAgo(unixSeconds){
+  const diff = Math.max(0, Math.floor(Date.now()/1000) - unixSeconds);
+  if(diff < 60) return `${diff}s ago`;
+  if(diff < 3600) return `${Math.floor(diff/60)}m ago`;
+  if(diff < 86400) return `${Math.floor(diff/3600)}h ago`;
+  return `${Math.floor(diff/86400)}d ago`;
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function hashHue(str){
+  let h = 0;
+  for(let i=0;i<str.length;i++) h = (h*31 + str.charCodeAt(i)) >>> 0;
+  return h % 360;
+}
+function avatarDataUri(letter, seed){
+  const hue = hashHue(seed || letter || '?');
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="80" height="80" fill="hsl(${hue},55%,62%)"/><text x="50%" y="54%" font-family="Space Grotesk,sans-serif" font-size="34" font-weight="700" fill="#2A2420" text-anchor="middle" dominant-baseline="middle">${letter.toUpperCase()}</text></svg>`;
+  return 'data:image/svg+xml,' + encodeURIComponent(svg);
+}
+function pfpUrl(username){
+  return `${state.apiBase}/userpfp?user=${encodeURIComponent(username)}&_=${pfpUrl._bust||''}`;
+}
+function pfpImg(username, cls){
+  const letter = (username||'?').charAt(0);
+  return `<img class="pfp-img ${cls||''}" data-fallback-letter="${escapeHtml(letter)}" data-fallback-seed="${escapeHtml(username||'?')}" src="${pfpUrl(username)}" alt="${escapeHtml(username||'')}'s avatar">`;
+}
+// event delegation for broken pfp images (error doesn't bubble, so use capture)
+root.addEventListener('error', (e)=>{
+  const t = e.target;
+  if(t && t.tagName === 'IMG' && t.classList.contains('pfp-img') && !t.dataset.fallbackApplied){
+    t.dataset.fallbackApplied = '1';
+    t.src = avatarDataUri(t.dataset.fallbackLetter || '?', t.dataset.fallbackSeed);
+  }
+}, true);
+
+async function resolveUser(idOrName){
+  if(state.userCache[idOrName]) return state.userCache[idOrName];
+  try{
+    const u = await api(`/user?user=${encodeURIComponent(idOrName)}`);
+    state.userCache[u.username] = u;
+    state.userCache[u.userid] = u;
+    return u;
+  }catch(e){
+    return { username: idOrName, userid: idOrName, bio:'', usernum:'?', fries:0 };
+  }
+}
+
+/* ---------------- auth screen ---------------- */
+
+function renderAuth(mode){
+  mode = mode || 'login';
+  root.innerHTML = `
+    <div class="center-shell">
+      <div class="auth-card">
+        <div class="brandmark"><span class="dot"></span><span class="display">Cami</span></div>
+        <p class="tag">One counter for your account, feed and table chat.</p>
+        <div class="tabswitch">
+          <button data-mode="login" class="${mode==='login'?'active':''}">Log in</button>
+          <button data-mode="register" class="${mode==='register'?'active':''}">Register</button>
+        </div>
+        <form id="auth-form">
+          <div class="field">
+            <label for="f-user">Username</label>
+            <input type="text" id="f-user" autocomplete="username" required minlength="4">
+          </div>
+          <div class="field">
+            <label for="f-pass">Password</label>
+            <input type="password" id="f-pass" autocomplete="${mode==='login'?'current-password':'new-password'}" required minlength="4">
+          </div>
+          <button class="btn accent" type="submit">${mode==='login'?'Log in':'Create account'}</button>
+          <div class="err-msg" id="auth-err"></div>
+        </form>
+        <details class="adv">
+          <summary>Connection settings</summary>
+          <div class="field">
+            <label for="cfg-api">API base URL</label>
+            <input type="text" id="cfg-api" value="${escapeHtml(state.apiBase)}">
+          </div>
+          <div class="field">
+            <label for="cfg-ws">Chat (websocket) URL</label>
+            <input type="text" id="cfg-ws" value="${escapeHtml(state.wsBase)}">
+          </div>
+        </details>
+      </div>
+    </div>`;
+
+  document.querySelectorAll('.tabswitch button').forEach(b=>{
+    b.addEventListener('click', ()=> renderAuth(b.dataset.mode));
+  });
+  document.getElementById('cfg-api').addEventListener('change', e => state.apiBase = e.target.value.trim().replace(/\/$/,''));
+  document.getElementById('cfg-ws').addEventListener('change', e => state.wsBase = e.target.value.trim().replace(/\/$/,''));
+
+  document.getElementById('auth-form').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const username = document.getElementById('f-user').value.trim();
+    const password = document.getElementById('f-pass').value;
+    const errEl = document.getElementById('auth-err');
+    errEl.textContent = '';
+    const btn = e.target.querySelector('button[type=submit]');
+    btn.disabled = true;
+    try{
+      const token = await api(mode==='login' ? '/login' : '/register', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({username, password})
+      });
+      state.token = token;
+      state.username = username;
+      state.profile = await resolveUser(username);
+      toast(mode==='login' ? `Welcome back, ${username}.` : `Account created — welcome, ${username}.`);
+      renderApp();
+      connectWs();
+    }catch(err){
+      errEl.textContent = err.message;
+    }finally{
+      btn.disabled = false;
+    }
+  });
+}
+
+/* ---------------- app shell ---------------- */
+
+function renderApp(){
+  root.innerHTML = `
+    <div class="shell">
+      <aside class="sidebar">
+        <div class="brandmark"><span class="dot"></span><span class="display">Cami</span></div>
+        <div class="profile-ticket" id="profile-ticket"></div>
+        <nav class="tabs">
+          <button data-tab="feed"><span class="ico">&#128220;</span> Feed</button>
+          <button data-tab="chat"><span class="ico">&#128172;</span> Chat</button>
+          <button data-tab="users"><span class="ico">&#128101;</span> Users</button>
+          <button data-tab="settings"><span class="ico">&#9881;</span> Settings</button>
+        </nav>
+        <div class="sidebar-foot">
+          <div class="ws-status"><span class="ws-dot" id="ws-dot"></span><span id="ws-label">connecting…</span></div>
+          <button class="btn small secondary" id="logout-btn">Log out</button>
+        </div>
+      </aside>
+      <main class="main">
+        <div class="topbar"><h1 id="view-title">Feed</h1></div>
+        <div class="view" id="view"></div>
+      </main>
+    </div>`;
+
+  renderProfileTicket();
+  document.getElementById('logout-btn').addEventListener('click', doLogout);
+  document.querySelectorAll('nav.tabs button').forEach(b=>{
+    b.addEventListener('click', ()=> switchTab(b.dataset.tab));
+  });
+  switchTab('feed');
+}
+
+function renderProfileTicket(){
+  const p = state.profile || {};
+  document.getElementById('profile-ticket').innerHTML = `
+    <div class="profile-top">
+      ${pfpImg(state.username)}
+      <div class="profile-names">
+        <div class="uname">${escapeHtml(state.username)}</div>
+        <div class="unum mono">user #${escapeHtml(String(p.usernum ?? '?'))}</div>
+      </div>
+    </div>
+    <div class="profile-bio">${escapeHtml(p.bio || '')}</div>
+    <div class="fries-badge">&#127839; ${escapeHtml(String(p.fries ?? 0))} fries</div>`;
+}
+
+function switchTab(tab){
+  state.activeTab = tab;
+  document.querySelectorAll('nav.tabs button').forEach(b=> b.classList.toggle('active', b.dataset.tab===tab));
+  const titles = { feed:'Feed', chat:'Chat', users:'Users', settings:'Settings' };
+  document.getElementById('view-title').textContent = titles[tab];
+  if(tab==='feed') renderFeedView();
+  if(tab==='chat') renderChatView();
+  if(tab==='users') renderUsersView();
+  if(tab==='settings') renderSettingsView();
+}
+
+async function doLogout(){
+  try{ await api('/logout', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token: state.token})}); }
+  catch(e){ /* ignore, log out locally regardless */ }
+  if(state.ws){ state.ws.onclose = null; state.ws.close(); }
+  clearTimeout(state.wsRetryTimer);
+  Object.assign(state, { token:null, username:null, profile:null, ws:null, wsConnected:false, wsRetry:0,
+    currentChannel:'general', currentChannelPassword:'', userCache:{}, posts:[], postsOffset:0, postsExhausted:false });
+  toast('Logged out.');
+  renderAuth('login');
+}
+
+/* ---------------- feed ---------------- */
+
+function renderFeedView(){
+  const view = document.getElementById('view');
+  view.innerHTML = `
+    <div class="composer">
+      <label for="post-body">New post</label>
+      <textarea id="post-body" maxlength="200" placeholder="What's on the menu today?"></textarea>
+      <div class="composer-foot">
+        <span class="char-count" id="char-count">0 / 200 (min 10)</span>
+        <button class="btn accent small" id="post-submit" disabled>Post</button>
+      </div>
+    </div>
+    <div id="posts-list"></div>
+    <div style="text-align:center; margin-top:6px;">
+      <button class="btn secondary small" id="load-more">Load more</button>
+    </div>`;
+
+  const ta = document.getElementById('post-body');
+  const cc = document.getElementById('char-count');
+  const submitBtn = document.getElementById('post-submit');
+  ta.addEventListener('input', ()=>{
+    const n = ta.value.length;
+    cc.textContent = `${n} / 200 (min 10)`;
+    const ok = n>=10 && n<=200;
+    cc.classList.toggle('bad', !ok && n>0);
+    submitBtn.disabled = !ok;
+  });
+  document.getElementById('post-submit').addEventListener('click', async ()=>{
+    submitBtn.disabled = true;
+    try{
+      const postid = await api('/social', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({body: ta.value, token: state.token})
+      });
+      state.posts.unshift({ postid, body: ta.value, timestamp: Math.floor(Date.now()/1000), userid: state.profile.userid });
+      ta.value=''; cc.textContent = '0 / 200 (min 10)'; cc.classList.remove('bad');
+      toast('Posted.');
+      renderPostsList();
+    }catch(err){ toast(err.message, true); }
+    finally{ submitBtn.disabled = false; }
+  });
+
+  document.getElementById('load-more').addEventListener('click', loadMorePosts);
+
+  state.posts = []; state.postsOffset = 0; state.postsExhausted = false;
+  loadMorePosts();
+}
+
+async function loadMorePosts(){
+  const btn = document.getElementById('load-more');
+  if(btn) { btn.disabled = true; btn.textContent = 'Loading…'; }
+  try{
+    const batch = await api(`/social?count=10&offset=${state.postsOffset}`);
+    if(Array.isArray(batch) && batch.length){
+      state.posts.push(...batch);
+      state.postsOffset += batch.length;
+      if(batch.length < 10) state.postsExhausted = true;
+    } else {
+      state.postsExhausted = true;
+    }
+  }catch(e){
+    state.postsExhausted = true;
+  }
+  renderPostsList();
+  if(btn){ btn.disabled = state.postsExhausted; btn.textContent = state.postsExhausted ? 'No more posts' : 'Load more'; }
+}
+
+async function renderPostsList(){
+  const list = document.getElementById('posts-list');
+  if(!list) return;
+  if(!state.posts.length){
+    list.innerHTML = `<div class="empty-state"><div class="glyph">&#127828;</div>Nothing on the board yet. Be the first to post.</div>`;
+    return;
+  }
+  list.innerHTML = state.posts.map((p,i)=>`
+    <article class="ticket" data-postid="${escapeHtml(p.postid)}">
+      <div class="ticket-head">
+        <span class="pfp-holder" data-userid="${escapeHtml(p.userid)}"></span>
+        <span class="who" data-userid-label="${escapeHtml(p.userid)}">…</span>
+        <span class="when">${escapeHtml(timeAgo(p.timestamp))}</span>
+      </div>
+      <div class="ticket-body">${escapeHtml(p.body)}</div>
+      <div class="ticket-order mono">order #${String(i+1).padStart(3,'0')}</div>
+    </article>`).join('');
+
+  // resolve usernames for each post's userid, then patch DOM
+  const uniqueIds = [...new Set(state.posts.map(p=>p.userid))];
+  await Promise.all(uniqueIds.map(async id=>{
+    const u = await resolveUser(id);
+    list.querySelectorAll(`[data-userid-label="${cssEscape(id)}"]`).forEach(el=> el.textContent = u.username);
+    list.querySelectorAll(`[data-userid="${cssEscape(id)}"].pfp-holder`).forEach(el=> el.outerHTML = pfpImg(u.username));
+  }));
+}
+function cssEscape(s){ return String(s).replace(/["\\]/g,'\\$&'); }
+
+/* ---------------- users ---------------- */
+
+async function renderUsersView(){
+  const view = document.getElementById('view');
+  view.innerHTML = `<div class="user-grid" id="user-grid"><div class="empty-state">Loading…</div></div>`;
+  try{
+    const usernames = await api('/users');
+    const grid = document.getElementById('user-grid');
+    if(!usernames.length){ grid.innerHTML = `<div class="empty-state">No users yet.</div>`; return; }
+    grid.innerHTML = usernames.map(name => `
+      <button class="user-chip" data-user="${escapeHtml(name)}">
+        ${pfpImg(name)}
+        <span>${escapeHtml(name)}</span>
+      </button>`).join('');
+    grid.querySelectorAll('.user-chip').forEach(chip=>{
+      chip.addEventListener('click', ()=> openUserModal(chip.dataset.user));
+    });
+  }catch(err){
+    document.getElementById('user-grid').innerHTML = `<div class="empty-state">${escapeHtml(err.message)}</div>`;
+  }
+}
+
+async function openUserModal(username){
+  const u = await resolveUser(username);
+  const backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop';
+  backdrop.innerHTML = `
+    <div class="modal">
+      <button class="close-x" aria-label="Close">&times;</button>
+      ${pfpImg(u.username,'lg')}
+      <div class="uname">${escapeHtml(u.username)}</div>
+      <div class="unum mono">user #${escapeHtml(String(u.usernum))} &middot; &#127839; ${escapeHtml(String(u.fries))} fries</div>
+      <div class="bio">${escapeHtml(u.bio || 'No bio yet.')}</div>
+    </div>`;
+  backdrop.addEventListener('click', (e)=>{ if(e.target===backdrop) backdrop.remove(); });
+  backdrop.querySelector('.close-x').addEventListener('click', ()=> backdrop.remove());
+  document.body.appendChild(backdrop);
+}
+
+/* ---------------- chat ---------------- */
+
+function renderChatView(){
+  const view = document.getElementById('view');
+  view.innerHTML = `
+    <div class="chat-shell">
+      <div class="chan-row">
+        <div class="field grow">
+          <label for="chan-name">Channel</label>
+          <input type="text" id="chan-name" value="${escapeHtml(state.currentChannel)}">
+        </div>
+        <div class="field grow">
+          <label for="chan-pass">Password (if any)</label>
+          <input type="text" id="chan-pass" value="${escapeHtml(state.currentChannelPassword)}">
+        </div>
+        <button class="btn accent small" id="chan-join">Join</button>
+      </div>
+      <div class="chan-badge">Currently in <b>#${escapeHtml(state.currentChannel)}</b> — new connections auto-join #general.</div>
+      <div class="chat-log" id="chat-log"></div>
+      <div class="chat-input-row">
+        <input type="text" id="chat-input" placeholder="Say something…" maxlength="500">
+        <button class="btn accent small" id="chat-send">Send</button>
+      </div>
+    </div>`;
+
+  document.getElementById('chan-join').addEventListener('click', ()=>{
+    const ch = document.getElementById('chan-name').value.trim() || 'general';
+    const pw = document.getElementById('chan-pass').value;
+    joinChannel(ch, pw);
+  });
+  const sendBtn = document.getElementById('chat-send');
+  const input = document.getElementById('chat-input');
+  const doSend = ()=>{
+    const msg = input.value.trim();
+    if(!msg) return;
+    sendChatMessage(msg);
+    input.value = '';
   };
+  sendBtn.addEventListener('click', doSend);
+  input.addEventListener('keydown', e=>{ if(e.key==='Enter') doSend(); });
 
-  /* ---------------- API helper ---------------- */
-  async function api(path, opts) {
-    opts = opts || {};
-    let url = path;
-    if (opts.params) {
-      const qs = new URLSearchParams(opts.params).toString();
-      url += (url.indexOf('?') >= 0 ? '&' : '?') + qs;
-    }
-    const fetchOpts = { method: opts.method || 'GET' };
-    if (opts.body) {
-      if (opts.isForm) {
-        fetchOpts.body = opts.body;
-      } else {
-        fetchOpts.headers = { 'Content-Type': 'application/json' };
-        fetchOpts.body = JSON.stringify(opts.body);
-      }
-    }
-    let res;
-    try {
-      res = await fetch(url, fetchOpts);
-    } catch (err) {
-      return { ok: false, status: 0, data: "Couldn't reach the server. Check your connection and try again." };
-    }
-    const contentType = res.headers.get('content-type') || '';
+  if(!state.wsConnected) connectWs();
+  renderChatLogSystem(`Connected as ${state.username}. Listening on #${state.currentChannel}.`);
+}
+
+function chatLogEl(){ return document.getElementById('chat-log'); }
+
+function renderChatLogSystem(text){
+  const log = chatLogEl();
+  if(!log) return;
+  const div = document.createElement('div');
+  div.className = 'sys-row';
+  div.textContent = text;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+}
+
+async function renderChatBubble(userid, message){
+  const log = chatLogEl();
+  if(!log) return;
+  const mine = state.profile && userid === state.profile.userid;
+  const row = document.createElement('div');
+  row.className = 'msg-row' + (mine ? ' mine' : '');
+  row.innerHTML = `<div class="bubble"><div class="who">…</div>${escapeHtml(message)}</div>`;
+  log.appendChild(row);
+  log.scrollTop = log.scrollHeight;
+  const u = await resolveUser(userid || 'unknown');
+  const who = row.querySelector('.who');
+  if(who) who.textContent = mine ? 'you' : u.username;
+}
+
+function joinChannel(channel, password){
+  if(!state.ws || !state.wsConnected){ toast('Not connected yet — hang tight.', true); return; }
+  state.ws.send(JSON.stringify({ type:'joinchannel', channel, password }));
+  state.currentChannel = channel;
+  state.currentChannelPassword = password;
+  const badge = document.querySelector('.chan-badge');
+  if(badge) badge.innerHTML = `Currently in <b>#${escapeHtml(channel)}</b> — new connections auto-join #general.`;
+  renderChatLogSystem(`Joined #${channel}.`);
+}
+
+function sendChatMessage(msg){
+  if(!state.ws || !state.wsConnected){ toast('Not connected yet — hang tight.', true); return; }
+  state.ws.send(JSON.stringify({
+    type:'send', channel: state.currentChannel, password: state.currentChannelPassword,
+    msg, token: state.token
+  }));
+}
+
+function setWsIndicator(connected, label){
+  const dot = document.getElementById('ws-dot');
+  const lbl = document.getElementById('ws-label');
+  if(dot) dot.classList.toggle('on', connected);
+  if(lbl) lbl.textContent = label;
+}
+
+function connectWs(){
+  if(state.ws && (state.ws.readyState === WebSocket.OPEN || state.ws.readyState === WebSocket.CONNECTING)) return;
+  clearTimeout(state.wsRetryTimer);
+  setWsIndicator(false, 'connecting…');
+  let ws;
+  try{
+    ws = new WebSocket(state.wsBase);
+  }catch(e){
+    setWsIndicator(false, 'unavailable');
+    toast('Could not open chat connection: ' + e.message, true);
+    return;
+  }
+  state.ws = ws;
+
+  ws.onopen = ()=>{
+    state.wsConnected = true;
+    state.wsRetry = 0;
+    setWsIndicator(true, `#${state.currentChannel}`);
+  };
+  ws.onmessage = (evt)=>{
     let data;
-    try {
-      data = contentType.indexOf('application/json') >= 0 ? await res.json() : await res.text();
-    } catch (err) {
-      data = '';
+    try{ data = JSON.parse(evt.data); }
+    catch(e){ renderChatLogSystem(String(evt.data)); return; }
+    if(data && data.type === 'newmsg'){
+      renderChatBubble(data.userid, data.message);
     }
-    return { ok: res.ok, status: res.status, data };
-  }
+  };
+  ws.onclose = ()=>{
+    state.wsConnected = false;
+    setWsIndicator(false, 'reconnecting…');
+    const delay = Math.min(1000 * (2 ** state.wsRetry), 15000);
+    state.wsRetry++;
+    state.wsRetryTimer = setTimeout(connectWs, delay);
+  };
+  ws.onerror = ()=>{ /* onclose will follow and handle retry */ };
+}
 
-  function errText(res, fallback) {
-    if (typeof res.data === 'string' && res.data) return res.data;
-    if (res.data && typeof res.data === 'object' && res.data.error) return res.data.error;
-    return fallback;
-  }
+/* ---------------- settings ---------------- */
 
-  /* ---------------- utils ---------------- */
-  function escapeHtml(str) {
-    return String(str == null ? '' : str).replace(/[&<>"']/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
-    });
-  }
+function renderSettingsView(){
+  const view = document.getElementById('view');
+  const p = state.profile || {};
+  view.innerHTML = `
+    <div class="settings-grid">
+      <div class="settings-card">
+        <h3>Bio</h3>
+        <p class="hint">Shown on your profile. 200 characters max.</p>
+        <div class="field">
+          <textarea id="bio-input" maxlength="200">${escapeHtml(p.bio || '')}</textarea>
+        </div>
+        <button class="btn accent small" id="bio-save">Save bio</button>
+      </div>
 
-  function relativeTime(unixSeconds) {
-    const diff = Math.floor(Date.now() / 1000 - unixSeconds);
-    if (diff < 5) return 'just now';
-    if (diff < 60) return diff + 's ago';
-    if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
-    if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
-    if (diff < 604800) return Math.floor(diff / 86400) + 'd ago';
-    return new Date(unixSeconds * 1000).toLocaleDateString();
-  }
+      <div class="settings-card">
+        <h3>Profile picture</h3>
+        <p class="hint">Square crop, resized automatically.</p>
+        <div style="display:flex; align-items:center; gap:14px;">
+          ${pfpImg(state.username, 'lg')}
+          <div>
+            <input type="file" id="pfp-input" accept="image/*">
+            <div style="margin-top:8px;"><button class="btn secondary small" id="pfp-save">Upload</button></div>
+          </div>
+        </div>
+      </div>
 
-  function avatarImg(identifier, alt, size) {
-    size = size || 'md';
-    const src = '/userpfp?user=' + encodeURIComponent(identifier) + '&t=' + cacheBust;
-    return '<span class="avatar avatar-' + size + '"><img src="' + src + '" alt="' + escapeHtml(alt || '') +
-      '" loading="lazy" onerror="this.onerror=null;this.src=\'' + FALLBACK_AVATAR + '\'"></span>';
-  }
+      <div class="settings-card">
+        <h3>Change password</h3>
+        <div class="row2">
+          <div class="field"><label for="pass-old">Current</label><input type="password" id="pass-old"></div>
+          <div class="field"><label for="pass-new">New</label><input type="password" id="pass-new" minlength="4"></div>
+        </div>
+        <button class="btn secondary small" id="pass-save">Update password</button>
+      </div>
 
-  function setLoading(btn, loading) {
-    btn.disabled = loading;
-    const spinner = btn.querySelector('.spinner');
-    const label = btn.querySelector('.btn-label');
-    if (spinner) spinner.hidden = !loading;
-    if (label) label.style.opacity = loading ? '0.6' : '1';
-  }
+      <div class="settings-card">
+        <h3>Connection</h3>
+        <p class="hint">Where this client looks for the API and chat servers.</p>
+        <div class="field"><label for="set-api">API base URL</label><input type="text" id="set-api" value="${escapeHtml(state.apiBase)}"></div>
+        <div class="field"><label for="set-ws">Chat (websocket) URL</label><input type="text" id="set-ws" value="${escapeHtml(state.wsBase)}"></div>
+        <button class="btn secondary small" id="conn-save">Apply &amp; reconnect chat</button>
+      </div>
 
-  function showError(el, msg) { el.textContent = msg; el.classList.add('visible'); }
-  function clearError(el) { el.textContent = ''; el.classList.remove('visible'); }
+      <div class="settings-card">
+        <h3>Account</h3>
+        <button class="btn danger small" id="logout-2">Log out</button>
+      </div>
+    </div>`;
 
-  function toast(message, type) {
-    const container = document.getElementById('toastContainer');
-    const el = document.createElement('div');
-    el.className = 'toast' + (type ? ' ' + type : '');
-    el.innerHTML = '<span class="toast-msg"></span><button class="toast-close" aria-label="Dismiss">&times;</button>';
-    el.querySelector('.toast-msg').textContent = message;
-    el.querySelector('.toast-close').addEventListener('click', function () { el.remove(); });
-    container.appendChild(el);
-    setTimeout(function () { el.remove(); }, 5000);
-  }
-
-  /* ---------------- user cache ---------------- */
-  async function fetchUser(identifier) {
-    if (state.userCache[identifier]) return state.userCache[identifier];
-    const res = await api('/user', { params: { user: identifier } });
-    if (res.ok) {
-      const u = res.data;
-      state.userCache[u.username] = u;
-      state.userCache[u.userid] = u;
-      return u;
-    }
-    return null;
-  }
-
-  /* ================= AUTH SCREEN ================= */
-  const authScreen = document.getElementById('authScreen');
-  const appShell = document.getElementById('appShell');
-  const loginForm = document.getElementById('loginForm');
-  const registerForm = document.getElementById('registerForm');
-  const loginError = document.getElementById('loginError');
-  const registerError = document.getElementById('registerError');
-
-  document.querySelectorAll('.auth-tab').forEach(function (tab) {
-    tab.addEventListener('click', function () { showAuthTab(tab.dataset.tab); });
-  });
-  function showAuthTab(name) {
-    document.querySelectorAll('.auth-tab').forEach(function (t) { t.classList.toggle('active', t.dataset.tab === name); });
-    loginForm.hidden = name !== 'login';
-    registerForm.hidden = name !== 'register';
-    clearError(loginError); clearError(registerError);
-  }
-
-  document.querySelectorAll('.pw-toggle').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      const input = document.getElementById(btn.dataset.target);
-      const showing = input.type === 'text';
-      input.type = showing ? 'password' : 'text';
-      btn.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
-    });
+  document.getElementById('bio-save').addEventListener('click', async ()=>{
+    const val = document.getElementById('bio-input').value;
+    try{
+      await api('/updatebio', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token: state.token, newbio: val}) });
+      state.profile.bio = val;
+      delete state.userCache[state.username];
+      renderProfileTicket();
+      toast('Bio updated.');
+    }catch(err){ toast(err.message, true); }
   });
 
-  loginForm.addEventListener('submit', async function (e) {
-    e.preventDefault();
-    clearError(loginError);
-    const username = document.getElementById('loginUsername').value.trim();
-    const password = document.getElementById('loginPassword').value;
-    const btn = document.getElementById('loginSubmitBtn');
-    setLoading(btn, true);
-    const res = await api('/login', { method: 'POST', body: { username: username, password: password } });
-    setLoading(btn, false);
-    if (res.ok) {
-      state.token = res.data;
-      await enterApp(username);
-    } else {
-      showError(loginError, errText(res, 'Login failed.'));
-    }
-  });
-
-  registerForm.addEventListener('submit', async function (e) {
-    e.preventDefault();
-    clearError(registerError);
-    const username = document.getElementById('registerUsername').value.trim();
-    const password = document.getElementById('registerPassword').value;
-    if (username.length < 4 || password.length < 4) {
-      showError(registerError, 'Password/Username too short (4 char minimum)');
-      return;
-    }
-    const btn = document.getElementById('registerSubmitBtn');
-    setLoading(btn, true);
-    const res = await api('/register', { method: 'POST', body: { username: username, password: password } });
-    setLoading(btn, false);
-    if (res.ok) {
-      state.token = res.data;
-      toast('Account created. Welcome to Cami.', 'success');
-      await enterApp(username);
-    } else {
-      showError(registerError, errText(res, 'Could not create your account.'));
-    }
-  });
-
-  async function enterApp(identifier) {
-    const me = await fetchUser(identifier);
-    if (!me) { toast('Logged in, but your profile could not be loaded.', 'error'); return; }
-    state.me = me;
-    authScreen.hidden = true;
-    appShell.hidden = false;
-    document.getElementById('sidebarAvatarWrap').innerHTML = avatarImg(me.userid, me.username, 'sm');
-    document.getElementById('sidebarUsername').textContent = me.username;
-    document.getElementById('tokenDisplay').textContent = maskToken(state.token);
-    renderProfilePage();
-    showPage('feed');
-    loadFeed(true);
-  }
-
-  function logout() {
-    if (state.token) { api('/logout', { method: 'POST', body: { token: state.token } }); }
-    state.token = null; state.me = null; state.userCache = {};
-    appShell.hidden = true;
-    authScreen.hidden = false;
-    loginForm.reset(); registerForm.reset();
-    showAuthTab('login');
-  }
-  document.getElementById('logoutBtn').addEventListener('click', logout);
-  document.getElementById('logoutBtn2').addEventListener('click', logout);
-
-  /* ================= NAVIGATION ================= */
-  function showPage(name) {
-    document.querySelectorAll('.nav-item[data-page]').forEach(function (n) { n.classList.toggle('active', n.dataset.page === name); });
-    document.querySelectorAll('.page[data-page]').forEach(function (p) { p.hidden = p.dataset.page !== name; });
-    if (name === 'explore') loadExplore();
-    if (name === 'profile') renderProfilePage();
-  }
-  document.querySelectorAll('[data-page]').forEach(function (el) {
-    el.addEventListener('click', function () { showPage(el.dataset.page); });
-  });
-
-  /* ================= FEED ================= */
-  const feedListEl = document.getElementById('feedList');
-  const feedEmptyEl = document.getElementById('feedEmpty');
-  const loadMoreBtn = document.getElementById('loadMoreBtn');
-
-  async function loadFeed(reset) {
-    if (reset) {
-      state.feedOffset = 0;
-      state.feedEnd = false;
-      feedListEl.innerHTML = '';
-      loadMoreBtn.hidden = true;
-    }
-    if (state.feedEnd) return;
-    loadMoreBtn.disabled = true;
-    const res = await api('/social', { params: { count: state.feedCount, offset: state.feedOffset } });
-    loadMoreBtn.disabled = false;
-
-    if (res.status === 204) {
-      state.feedEnd = true;
-      loadMoreBtn.hidden = true;
-      feedEmptyEl.hidden = state.feedOffset > 0;
-      return;
-    }
-    if (!res.ok) { toast(errText(res, 'Could not load the feed.'), 'error'); return; }
-
-    const posts = res.data;
-    feedEmptyEl.hidden = true;
-    const authors = await Promise.all(posts.map(function (p) { return fetchUser(p.userid); }));
-    posts.forEach(function (p, i) { feedListEl.appendChild(renderPostCard(p, authors[i])); });
-    state.feedOffset += posts.length;
-    loadMoreBtn.hidden = posts.length < state.feedCount;
-  }
-
-  function renderPostCard(post, author) {
-    const el = document.createElement('article');
-    el.className = 'post-card card-enter';
-    el.innerHTML =
-      '<div>' + avatarImg(post.userid, author ? author.username : '', 'md') + '</div>' +
-      '<div class="post-body">' +
-        '<div class="post-meta">' +
-          '<button class="post-author"></button>' +
-          '<span class="post-dot">&middot;</span>' +
-          '<time class="post-time"></time>' +
-        '</div>' +
-        '<p class="post-text"></p>' +
-      '</div>';
-    el.querySelector('.post-author').textContent = author ? author.username : 'Unknown user';
-    el.querySelector('.post-time').textContent = relativeTime(post.timestamp);
-    el.querySelector('.post-time').title = new Date(post.timestamp * 1000).toLocaleString();
-    el.querySelector('.post-text').textContent = post.body;
-    el.querySelector('.post-author').addEventListener('click', function () { openUserModal(post.userid); });
-    return el;
-  }
-
-  document.getElementById('refreshFeedBtn').addEventListener('click', function () { loadFeed(true); });
-  loadMoreBtn.addEventListener('click', function () { loadFeed(false); });
-
-  const composeForm = document.getElementById('composeForm');
-  const composeBody = document.getElementById('composeBody');
-  const composeCount = document.getElementById('composeCount');
-  const composeSubmit = document.getElementById('composeSubmit');
-  const composeError = document.getElementById('composeError');
-
-  composeBody.addEventListener('input', function () {
-    const len = composeBody.value.length;
-    composeCount.textContent = len + ' / 200';
-    composeCount.classList.toggle('warning', len > 180);
-    composeSubmit.disabled = len < 10 || len > 200;
-    clearError(composeError);
-  });
-  composeBody.addEventListener('keydown', function (e) {
-    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && !composeSubmit.disabled) composeForm.requestSubmit();
-  });
-
-  composeForm.addEventListener('submit', async function (e) {
-    e.preventDefault();
-    clearError(composeError);
-    const body = composeBody.value;
-    setLoading(composeSubmit, true);
-    const res = await api('/social', { method: 'POST', body: { body: body, token: state.token } });
-    setLoading(composeSubmit, false);
-    if (res.ok) {
-      composeBody.value = '';
-      composeCount.textContent = '0 / 200';
-      composeSubmit.disabled = true;
-      loadFeed(true);
-      toast('Posted.', 'success');
-    } else {
-      showError(composeError, errText(res, 'Could not post right now.'));
-    }
-  });
-
-  /* ================= EXPLORE ================= */
-  const usersGridEl = document.getElementById('usersGrid');
-
-  async function loadExplore() {
-    usersGridEl.innerHTML = '<div class="grid-loading">Loading users…</div>';
-    const res = await api('/users');
-    if (!res.ok) { usersGridEl.innerHTML = ''; toast(errText(res, 'Could not load users.'), 'error'); return; }
-    const usernames = res.data;
-    usersGridEl.innerHTML = '';
-    if (!usernames.length) {
-      usersGridEl.innerHTML = '<div class="empty-state"><p>No one here yet</p><span>Once people join Cami, they will show up here.</span></div>';
-      return;
-    }
-    usernames.forEach(function (name) { usersGridEl.appendChild(renderUserCard(name)); });
-  }
-
-  function renderUserCard(username) {
-    const el = document.createElement('button');
-    el.className = 'user-card card-enter';
-    el.innerHTML = avatarImg(username, username, 'md') + '<span class="user-card-name"></span>';
-    el.querySelector('.user-card-name').textContent = username;
-    el.addEventListener('click', function () { openUserModal(username); });
-    return el;
-  }
-
-  document.getElementById('userSearchBtn').addEventListener('click', runUserSearch);
-  document.getElementById('userSearch').addEventListener('keydown', function (e) { if (e.key === 'Enter') runUserSearch(); });
-  function runUserSearch() {
-    const val = document.getElementById('userSearch').value.trim();
-    if (!val) return;
-    openUserModal(val);
-  }
-
-  /* ================= USER MODAL ================= */
-  const userModal = document.getElementById('userModal');
-  const userModalContent = document.getElementById('userModalContent');
-
-  async function openUserModal(identifier) {
-    userModal.hidden = false;
-    userModalContent.innerHTML = '<div class="modal-loading">Loading…</div>';
-    const u = await fetchUser(identifier);
-    if (!u) { userModalContent.innerHTML = '<p style="text-align:center;color:var(--text-dim);padding:20px 0;">User not found.</p>'; return; }
-    userModalContent.innerHTML =
-      '<div class="modal-profile">' +
-        avatarImg(u.userid, u.username, 'lg') +
-        '<h2></h2>' +
-        '<p class="modal-bio"></p>' +
-        '<div class="stat-row">' +
-          '<div class="stat"><span class="stat-label">Member</span><span class="stat-value">#' + escapeHtml(u.usernum) + '</span></div>' +
-          '<div class="stat"><span class="stat-label"><svg class="fries-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 10L5 21h14l-1-11z"/><line x1="9" y1="4" x2="9" y2="11"/><line x1="12" y1="2" x2="12" y2="11"/><line x1="15" y1="4" x2="15" y2="11"/></svg>Fries</span><span class="stat-value">' + escapeHtml(u.fries) + '</span></div>' +
-        '</div>' +
-        '<div class="id-row"><span class="id-label">User ID</span><code class="id-value"></code></div>' +
-      '</div>';
-    userModalContent.querySelector('h2').textContent = u.username;
-    userModalContent.querySelector('.modal-bio').textContent = u.bio;
-    userModalContent.querySelector('.id-value').textContent = u.userid;
-  }
-  document.getElementById('userModalClose').addEventListener('click', function () { userModal.hidden = true; });
-  userModal.addEventListener('click', function (e) { if (e.target === userModal) userModal.hidden = true; });
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !userModal.hidden) userModal.hidden = true; });
-
-  /* ================= PROFILE ================= */
-  function renderProfilePage() {
-    const me = state.me;
-    if (!me) return;
-    document.getElementById('profileAvatarWrap').innerHTML = avatarImg(me.userid, me.username, 'xl');
-    document.getElementById('profileUsernameEl').textContent = me.username;
-    document.getElementById('profileUsernumEl').textContent = 'User #' + me.usernum;
-    document.getElementById('profileUsernumStat').textContent = '#' + me.usernum;
-    document.getElementById('profileFriesEl').textContent = me.fries;
-    document.getElementById('profileUseridEl').textContent = me.userid;
-    document.getElementById('bioDisplay').textContent = me.bio;
-  }
-
-  document.getElementById('avatarUploadWrap').addEventListener('click', function () {
-    document.getElementById('avatarUploadInput').click();
-  });
-  document.getElementById('avatarUploadInput').addEventListener('change', async function (e) {
-    const file = e.target.files[0];
-    if (!file) return;
+  document.getElementById('pfp-save').addEventListener('click', async ()=>{
+    const file = document.getElementById('pfp-input').files[0];
+    if(!file){ toast('Choose an image first.', true); return; }
     const fd = new FormData();
     fd.append('token', state.token);
     fd.append('image', file);
-    const wrap = document.getElementById('profileAvatarWrap').querySelector('.avatar');
-    if (wrap) wrap.classList.add('uploading');
-    const res = await api('/setpfp', { method: 'POST', body: fd, isForm: true });
-    if (res.ok) {
-      cacheBust = Date.now();
-      document.getElementById('profileAvatarWrap').innerHTML = avatarImg(state.me.userid, state.me.username, 'xl');
-      document.getElementById('sidebarAvatarWrap').innerHTML = avatarImg(state.me.userid, state.me.username, 'sm');
-      toast('Profile photo updated.', 'success');
-    } else {
-      if (wrap) wrap.classList.remove('uploading');
-      toast(errText(res, 'Could not upload photo.'), 'error');
-    }
-    e.target.value = '';
+    try{
+      await fetch(state.apiBase + '/setpfp', { method:'POST', body: fd })
+        .then(async res=>{
+          if(!res.ok) throw new Error(await res.text());
+        });
+      pfpUrl._bust = Date.now();
+      toast('Profile picture updated.');
+      renderProfileTicket();
+      renderSettingsView();
+    }catch(err){ toast(err.message, true); }
   });
 
-  const bioDisplay = document.getElementById('bioDisplay');
-  const bioEditor = document.getElementById('bioEditor');
-  const bioTextarea = document.getElementById('bioTextarea');
-  const bioCount = document.getElementById('bioCount');
-  const bioError = document.getElementById('bioError');
-  const bioEditBtn = document.getElementById('bioEditBtn');
-
-  bioEditBtn.addEventListener('click', function () {
-    bioTextarea.value = state.me.bio;
-    bioCount.textContent = bioTextarea.value.length + ' / 200';
-    bioDisplay.hidden = true;
-    bioEditBtn.hidden = true;
-    bioEditor.hidden = false;
-    bioTextarea.focus();
-  });
-  bioTextarea.addEventListener('input', function () {
-    bioCount.textContent = bioTextarea.value.length + ' / 200';
-    clearError(bioError);
-  });
-  document.getElementById('bioCancelBtn').addEventListener('click', function () {
-    bioEditor.hidden = true;
-    bioDisplay.hidden = false;
-    bioEditBtn.hidden = false;
-    clearError(bioError);
-  });
-  document.getElementById('bioSaveBtn').addEventListener('click', async function () {
-    clearError(bioError);
-    const newbio = bioTextarea.value;
-    if (!newbio.length) { showError(bioError, 'Bio cannot be empty.'); return; }
-    const btn = document.getElementById('bioSaveBtn');
-    setLoading(btn, true);
-    const res = await api('/updatebio', { method: 'POST', body: { token: state.token, newbio: newbio } });
-    setLoading(btn, false);
-    if (res.ok) {
-      state.me.bio = res.data;
-      state.userCache[state.me.username] = state.me;
-      state.userCache[state.me.userid] = state.me;
-      bioDisplay.textContent = state.me.bio;
-      bioEditor.hidden = true;
-      bioDisplay.hidden = false;
-      bioEditBtn.hidden = false;
-      toast('Bio updated.', 'success');
-    } else {
-      showError(bioError, errText(res, 'Could not update your bio.'));
-    }
+  document.getElementById('pass-save').addEventListener('click', async ()=>{
+    const oldpass = document.getElementById('pass-old').value;
+    const newpass = document.getElementById('pass-new').value;
+    try{
+      await api(`/changepass?token=${encodeURIComponent(state.token)}`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({oldpass, newpass})
+      });
+      toast('Password updated.');
+      document.getElementById('pass-old').value = '';
+      document.getElementById('pass-new').value = '';
+    }catch(err){ toast(err.message, true); }
   });
 
-  /* ================= SETTINGS ================= */
-  function maskToken(t) { return t ? '•'.repeat(Math.min(t.length, 32)) : ''; }
-  let tokenRevealed = false;
-  const tokenDisplay = document.getElementById('tokenDisplay');
-  document.getElementById('tokenRevealBtn').addEventListener('click', function () {
-    tokenRevealed = !tokenRevealed;
-    tokenDisplay.textContent = tokenRevealed ? state.token : maskToken(state.token);
-    this.setAttribute('aria-label', tokenRevealed ? 'Hide token' : 'Show token');
-  });
-  document.getElementById('tokenCopyBtn').addEventListener('click', async function () {
-    try {
-      await navigator.clipboard.writeText(state.token);
-      toast('Token copied to clipboard.', 'success');
-    } catch (err) {
-      toast('Could not copy automatically. Reveal it and copy manually.', 'error');
-    }
+  document.getElementById('conn-save').addEventListener('click', ()=>{
+    state.apiBase = document.getElementById('set-api').value.trim().replace(/\/$/,'');
+    state.wsBase = document.getElementById('set-ws').value.trim().replace(/\/$/,'');
+    if(state.ws){ state.ws.onclose = null; state.ws.close(); }
+    state.wsConnected = false; state.wsRetry = 0;
+    connectWs();
+    toast('Connection settings applied.');
   });
 
-  const changePassForm = document.getElementById('changePassForm');
-  const changePassError = document.getElementById('changePassError');
-  changePassForm.addEventListener('submit', async function (e) {
-    e.preventDefault();
-    clearError(changePassError);
-    const oldpass = document.getElementById('oldPassword').value;
-    const newpass = document.getElementById('newPassword').value;
-    const confirm = document.getElementById('confirmPassword').value;
-    if (newpass !== confirm) { showError(changePassError, "New passwords don't match."); return; }
-    if (newpass.length < 4) { showError(changePassError, 'Password too short (4 char minimum)'); return; }
-    const btn = document.getElementById('changePassBtn');
-    setLoading(btn, true);
-    const res = await api('/changepass', { method: 'POST', params: { token: state.token }, body: { oldpass: oldpass, newpass: newpass } });
-    setLoading(btn, false);
-    if (res.ok) {
-      changePassForm.reset();
-      toast('Password updated.', 'success');
-    } else {
-      showError(changePassError, errText(res, 'Could not update your password.'));
-    }
-  });
+  document.getElementById('logout-2').addEventListener('click', doLogout);
+}
 
-})();
+/* ---------------- boot ---------------- */
+renderAuth('login');
 </script>
 </body>
 </html>

@@ -29,7 +29,7 @@ def register():
     uid = str(u.uuid4())
     tokendb = TinyDB(os.path.join(BASE_DIR, "tokens.json"))
     if len(result) == 0:
-        if len(registername) >= 4 and len(registerpassword) >= 4:
+        if 4 <= len(registername) <= 32 and 4 <= len(password) <= 32:
             token = secrets.token_hex(32)
             unix_time = int(time.time())
             usernum = len(db) + 1
@@ -38,7 +38,7 @@ def register():
             print(f"{registername} has registered an account! They are user number: {usernum}.")
             return token, 200
         else:
-            return "Password/Username too short (4 char minimum)", 403
+            return "Password/Username too short or long (4 char minimum, 32 char maximum.)", 403
     else:
         return "Username already in use.", 409
 
@@ -65,7 +65,7 @@ def login():
         print(f"{username} has just logged in!")
         return token, 200
 
-    return "Username/Password invalid", 401
+    return "Username/Password does not exist", 404
 
 @app.post("/updatebio")
 def updatebio():
@@ -218,7 +218,7 @@ def setpfp():
         path = os.path.join(BASE_DIR, "uploads", "pfps", f"{uid}.png")
         img.save(path)
 
-        return {"message": "Uploaded!", "filename": f"{uid}.png"}, 201
+        return {"msg": "Uploaded!", "filename": f"{uid}.png"}, 201
     else:
         return "Missing token", 400
     
@@ -241,6 +241,10 @@ def getpfp():
 @app.route('/client')
 def client():
     return render_template('client.html')
+
+@app.route('/image')
+def image():
+    return render_template('image.html')
 
 portuse = 5613
 print(f"Running on port {portuse}")
