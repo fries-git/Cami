@@ -2,7 +2,10 @@
 
 > *A simple, silly, and lightweight http only authentication service made by someone with no experience.*
 
-Cami is an authentication service that is being slowly expanded for a few reasons: I enjoy making chat servers, but have no way to enforce bans, usernames, or any number of things. 2: I'm bored out of my mind. 3: I love working on it! It's entirely HTTP based right now, with some websocket work being made for a live chatting service, and online status.  
+Cami is an authentication service that is being slowly expanded for a few reasons:  
+1: I enjoy making chat servers, but have no way to enforce bans, usernames, or any number of things.  
+2: I'm bored out of my mind.  
+3: I love working on it! It's entirely HTTP based right now, with some websocket work being made for a live chatting service, and online status.   
 
 For web users, just go to the server address /client and register.  
 For stardance users, hit try project and register an account.  
