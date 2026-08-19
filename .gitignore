@@ -3,3 +3,5 @@ test.py
 *.cpy
 *.pyc
 servers/uploads/
+*.env
+*.js

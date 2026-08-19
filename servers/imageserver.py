@@ -21,12 +21,17 @@ def uploadimage():
         if not image:
             return {"error": "No image uploaded"}, 400
 
-        img = Image.open(image)
+        try:
+            img = Image.open(image)
+            img.load()
+        except (Exception) as e:
+            return {"error": f"Invalid or incomplete image: {e}"}, 400
+        
         img_format = (str(img.format)).lower()
         if img_format == "gif":
             pass
         else:
-            img.convert("RGB")
+            img = img.convert("RGBA")
 
         width, height = img.size
         
@@ -78,8 +83,8 @@ def uploadimage():
         return "Missing/Invalid token", 400
     return "Unhandled Error", 400
 
-@app.get("/getimage/<filename>")
-def getimage(filename):
+@app.get("/image/<filename>")
+def image(filename):
 
     png_path = os.path.join(
         BASE_DIR, "uploads", "imagestorage", f"{filename}.png"
@@ -95,7 +100,7 @@ def getimage(filename):
 
     return "Image doesn't exist", 404
 
-@app.get("/getgif/<filename>.gif")
+@app.get("/gif/<filename>.gif")
 def get_gif(filename):
 
     path = os.path.join(BASE_DIR,"uploads","imagestorage",f"{filename}.gif")
@@ -112,4 +117,4 @@ portuse = 5614
 print(f"Running on port {portuse}")
 
 if __name__ == "__main__":
-    serve(app, host="0.0.0.0", port=portuse)
+    serve(app, host="0.0.0.0", port=portuse, threads = 8)

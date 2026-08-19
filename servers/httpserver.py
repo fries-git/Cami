@@ -5,7 +5,7 @@ import uuid as u
 import secrets
 from waitress import serve
 import time
-from helperfuncs import validate, tokentoname
+from helperfuncs import validate, tokentoname, usernametoid
 import os
 from PIL import Image
 
@@ -222,21 +222,26 @@ def setpfp():
     else:
         return "Missing token", 400
     
-@app.get("/userpfp")
-def getpfp():
+@app.get("/userpfp/<username>")
+def getpfp(username):
     User = Query()
-    userget = request.args.get("user")
-    result = db.search(User.username == userget) or db.search(User.userid == userget)
+    path = os.path.join(BASE_DIR, "users.json")
+    db = TinyDB(path)
+
+    result = db.search(User.username == username) or db.search(User.userid == username)
+
     if result:
-        userid = result[0]["userid"]
-        path = os.path.join(BASE_DIR, "uploads", "pfps", f"{userid}.png")
-        if not os.path.exists(path):
-            path = os.path.join(BASE_DIR, "emptypfp.png")
+        png_path = os.path.join(
+            BASE_DIR, "uploads", "pfps", f"{usernametoid(username)}.png"
+        )
 
-        return send_file(path, mimetype="image/png")
-
-    else:
-        return "User not found", 404
+        if os.path.exists(png_path):
+            return send_file(png_path, mimetype="image/png")
+        
+        png_path = os.path.join(BASE_DIR, "emptypfp.png")
+        return send_file(png_path, mimetype="image/png")
+    
+    return "User doesn't exist."
 
 @app.route('/client')
 def client():
@@ -250,4 +255,4 @@ portuse = 5613
 print(f"Running on port {portuse}")
 
 if __name__ == "__main__":
-    serve(app, host="0.0.0.0", port=portuse)
+    serve(app, host="0.0.0.0", port=portuse, threads = 8)
