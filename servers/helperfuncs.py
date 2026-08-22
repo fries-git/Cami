@@ -18,6 +18,23 @@ def save_to_file(data, filename):
     with open(path, "a", encoding="utf-8") as file:
         file.write(str(data) + "\n")
 
+def edit_user(token, field, value):
+    userid = validate(token)
+    db = TinyDB(os.path.join(BASE_DIR, "users.json"))
+    
+    if not userid:
+        return False, "Invalid token"
+
+    User = Query()
+    result = db.search(User.userid == userid)
+
+    if not result:
+        return False, "User not found"
+
+    db.update({field: value}, User.userid == userid)
+
+    return True, "Updated successfully"
+
 def usernametoid(username):
     User = Query()
     db = TinyDB(os.path.join(BASE_DIR, "users.json"))

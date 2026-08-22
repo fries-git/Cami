@@ -1,11 +1,11 @@
-from flask import Flask, request, Response, send_file, render_template
+from flask import Flask, request, send_file, render_template
 from flask_cors import CORS
 from tinydb import TinyDB, Query
 import uuid as u
 import secrets
 from waitress import serve
 import time
-from helperfuncs import validate, tokentoname, usernametoid
+from helperfuncs import validate, tokentoname, usernametoid, edit_user
 import os
 from PIL import Image
 
@@ -34,7 +34,7 @@ def register():
             unix_time = int(time.time())
             usernum = len(db) + 1
             tokendb.insert({"timestamp": unix_time, "token": token, "userid": uid})
-            db.insert({'username': registername, 'password': registerpassword, 'usernum': usernum, 'bio': f'Hello! I am {registername}, and I have not yet setup my bio!', 'fries': 0, 'userid': uid})
+            db.insert({'username': registername, 'displayname': registername, 'password': registerpassword, 'usernum': usernum, 'bio': f'Hello! I am {registername}, and I have not yet setup my bio!', 'avatardeco': None, 'fries': 0, 'userid': uid})
             print(f"{registername} has registered an account! They are user number: {usernum}.")
             return token, 200
         else:
@@ -79,8 +79,7 @@ def updatebio():
 
     newbio = data.get("newbio")
     if len(newbio) <= 200:
-        User = Query()
-        db.update({"bio": newbio}, User.userid == userid)
+        edit_user(token, "bio", newbio)
         print(f"{tokentoname(token)} has just updated their bio!")
         return newbio, 200
     else:
@@ -94,11 +93,58 @@ def user():
     userget = request.args.get("user")
     result = db.search(User.username == userget) or db.search(User.userid == userget)
     if result:
-        userobj = {"username":result[0]["username"], "userid":result[0]["userid"], "bio": result[0]["bio"], "usernum": result[0]["usernum"], "fries": result[0]["fries"]}
+        userobj = {"username":result[0]["username"], "displayname":result[0]["displayname"], "avatardeco":result[0]["avatardeco"], "userid":result[0]["userid"], "bio": result[0]["bio"], "usernum": result[0]["usernum"], "fries": result[0]["fries"]}
         print(f"{userget} has just been queried.")
         return userobj, 200
     else:
         return "User not found", 404
+
+@app.post("/changename")
+def changename():
+    data = request.get_json()
+    User = Query()
+
+    username = data.get("username")
+    token = request.args.get("token")
+
+    validation = validate(token)
+
+    if not validation:
+        return "Invalid token", 401
+
+    if not username or len(username) < 4:
+        return "Username too short (4 char minimum)", 403
+
+    if db.search(User.username == username):
+        return "Username already taken", 409
+
+    if not db.search(User.userid == validation):
+        return "User not found", 404
+
+    edit_user(token, "username", username)
+    return f"Updated username. Hello {username}!", 200
+
+@app.post("/changedisplay")
+def changedisplay():
+    data = request.get_json()
+    User = Query()
+
+    name = data.get("displayname")
+    token = request.args.get("token")
+
+    validation = validate(token)
+
+    if not validation:
+        return "Invalid token", 401
+
+    if not name or len(name) < 4:
+        return "New displayname too short (4 char minimum)", 403
+
+    if not db.search(User.userid == validation):
+        return "User not found", 404
+
+    edit_user(token, "displayname", name)
+    return f"Updated username. Hello {name}!", 200
 
 @app.post("/changepass")
 def changepass():
@@ -243,13 +289,16 @@ def getpfp(username):
     
     return "User doesn't exist."
 
-@app.route('/client')
-def client():
-    return render_template('client.html')
+@app.get("/pfpdeco/<filename>")
+def image(filename):
 
-@app.route('/image')
-def image():
-    return render_template('image.html')
+    path = os.path.join(BASE_DIR, "uploads", "avatardecos", f"{filename}.png")
+
+    if os.path.exists(path):
+        return send_file(path, mimetype="image/png")
+
+    return "Image doesn't exist", 404
+
 
 portuse = 5613
 print(f"Running on port {portuse}")
