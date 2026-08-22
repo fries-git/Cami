@@ -26,10 +26,10 @@ Get information about a user from id.\
 Currency.\
 A light chatting service similar to a stripped down twitter feed.\
 PFPs.\
+Image library similar to like Tenor but for pngs/jpgs.\
 
 W.I.P.  
 Live chatting over websocket connections!  
-Image library similar to like Tenor but for pngs/jpgs.  
 Music library where people can upload mp3s and get them back to play them.  
 
 To run locally:  
