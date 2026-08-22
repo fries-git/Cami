@@ -85,16 +85,15 @@ def updatebio():
     else:
         return "Bio too long > (200 chars)", 422
 
-@app.get("/user")
-def user():
+@app.get("/user/<name>")
+def user(name):
     User = Query()
     path = os.path.join(BASE_DIR, "users.json")
     db = TinyDB(path)
-    userget = request.args.get("user")
-    result = db.search(User.username == userget) or db.search(User.userid == userget)
+    result = db.search(User.username == name) or db.search(User.userid == name)
     if result:
         userobj = {"username":result[0]["username"], "displayname":result[0]["displayname"], "avatardeco":result[0]["avatardeco"], "userid":result[0]["userid"], "bio": result[0]["bio"], "usernum": result[0]["usernum"], "fries": result[0]["fries"]}
-        print(f"{userget} has just been queried.")
+        print(f"{name} has just been queried.")
         return userobj, 200
     else:
         return "User not found", 404
@@ -130,7 +129,7 @@ def changedisplay():
     User = Query()
 
     name = data.get("displayname")
-    token = request.args.get("token")
+    token = data.get("token")
 
     validation = validate(token)
 
