@@ -3,6 +3,16 @@ import os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))   
 
+def dispnamefromrealname(username):
+    User = Query()
+    db = TinyDB(os.path.join(BASE_DIR, "users.json"))
+    result = db.search(User.username == username)
+
+    if result:
+        return result[0]["displayname"]
+
+    return None
+
 def getlength(filename):
     path = os.path.join(BASE_DIR, filename)
     if os.path.exists(path):
@@ -18,7 +28,7 @@ def save_to_file(data, filename):
     with open(path, "a", encoding="utf-8") as file:
         file.write(str(data) + "\n")
 
-def edit_user(token, field, value):
+def edit_user_param(token, field, value):
     userid = validate(token)
     db = TinyDB(os.path.join(BASE_DIR, "users.json"))
     

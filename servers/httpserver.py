@@ -5,7 +5,7 @@ import uuid as u
 import secrets
 from waitress import serve
 import time
-from helperfuncs import validate, tokentoname, usernametoid, edit_user
+from helperfuncs import validate, tokentoname, usernametoid, edit_user_param
 import os
 from PIL import Image
 
@@ -79,7 +79,7 @@ def updatebio():
 
     newbio = data.get("newbio")
     if len(newbio) <= 200:
-        edit_user(token, "bio", newbio)
+        edit_user_param(token, "bio", newbio)
         print(f"{tokentoname(token)} has just updated their bio!")
         return newbio, 200
     else:
@@ -120,7 +120,7 @@ def changename():
     if not db.search(User.userid == validation):
         return "User not found", 404
 
-    edit_user(token, "username", username)
+    edit_user_param(token, "username", username)
     return f"Updated username. Hello {username}!", 200
 
 @app.post("/changedisplay")
@@ -142,7 +142,7 @@ def changedisplay():
     if not db.search(User.userid == validation):
         return "User not found", 404
 
-    edit_user(token, "displayname", name)
+    edit_user_param(token, "displayname", name)
     return f"Updated username. Hello {name}!", 200
 
 @app.post("/changepass")
@@ -172,7 +172,7 @@ def changepass():
 
 @app.get("/")
 def home():
-    return """Hey! This is Cami, and authentication program. Please, read <a href="https://github.com/fries-git/Cami/tree/main/docs">the documentation</a> for usage!""", 200
+    return render_template("main.html"), 200    
 
 @app.post("/social")
 def socialpost():
@@ -273,20 +273,20 @@ def getpfp(username):
     path = os.path.join(BASE_DIR, "users.json")
     db = TinyDB(path)
 
-    result = db.search(User.username == username) or db.search(User.userid == username)
+    result = db.search((User.username == username) | (User.userid == username))
 
     if result:
-        png_path = os.path.join(
-            BASE_DIR, "uploads", "pfps", f"{usernametoid(username)}.png"
-        )
+        userid = result[0]["userid"]
 
-        if os.path.exists(png_path):
-            return send_file(png_path, mimetype="image/png")
-        
-        png_path = os.path.join(BASE_DIR, "emptypfp.png")
-        return send_file(png_path, mimetype="image/png")
-    
-    return "User doesn't exist."
+        path = os.path.join(BASE_DIR, "uploads", "pfps", f"{userid}.png")
+
+        if os.path.exists(path):
+            return send_file(path, mimetype="image/png")
+
+        emptypfp = os.path.join(BASE_DIR, "emptypfp.png")
+        return send_file(emptypfp, mimetype="image/png")
+
+    return "User doesn't exist.", 404
 
 @app.get("/pfpdeco/<filename>")
 def image(filename):

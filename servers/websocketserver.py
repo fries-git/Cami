@@ -4,7 +4,7 @@ import json
 import os
 import requests
 from dotenv import load_dotenv
-from helperfuncs import validate, save_to_file, getlength, useridtoname
+from helperfuncs import validate, save_to_file, getlength, useridtoname, dispnamefromrealname
 import uuid as u
 import time
 
@@ -53,7 +53,12 @@ async def echo(websocket):
     try:
         async for message in websocket:
             # The dreaded block... guh...
-            message = json.loads(message)
+            try:
+                message = json.loads(message)
+            except json.decoder.JSONDecodeError as e:
+                await websocket.send("Invalid JSON")
+                break
+
             msgtype = message.get("type")
             channel = message.get("channel")
             msgid = message.get("msgid")
@@ -61,8 +66,8 @@ async def echo(websocket):
             password = message.get("password")
             msg = message.get("msg")
             token = message.get("token")
-            count = message.get("count")
-            offset = message.get("offset")
+            count = int(message.get("count") or 10)
+            offset = int(message.get("offset") or 0)
             genid = str(u.uuid4())
 
             if msgtype:
@@ -77,8 +82,9 @@ async def echo(websocket):
                                         continue
 
                                     if userid:
+                                        dispname = dispnamefromrealname(username)
                                         username = useridtoname(userid)
-                                        content = json.dumps({"type": "newmsg", "userid": userid, "username": username, "channel":channel, "message": msg, "msgid": genid, "time": time.time()})
+                                        content = json.dumps({"type": "newmsg", "userid": userid, "username": username, "displayname": dispname, "channel":channel, "message": msg, "msgid": genid, "time": time.time()})
                                         save_to_file(content, f"{channel}.json")
                                         print(f"{username} just said: {msg} in livechat. Channel: {channel}.")
 
@@ -99,11 +105,20 @@ async def echo(websocket):
                                 continue
                             print(f"{useridtoname(userid)} just joined {channel}.")
                             addusertochannel(websocket, channel)
+                            username = useridtoname(userid)
 
-                            await websocket.send(json.dumps({
+                            content = json.dumps({
                                 "type": "joinedchannel",
+                                "userid": userid,
+                                "username": username,
                                 "channel": channel
-                            }))
+                            })
+
+                            for ws in channels[channel]:
+                                try:
+                                    await ws.send(content)
+                                except Exception as e:
+                                    print("error:", e)
                         else:
                             await websocket.send("Channel does not exist")
 
@@ -111,11 +126,11 @@ async def echo(websocket):
                         histlist = []
                         path = os.path.join(BASE_DIR,f"{channel}.json")
                         with open(path, 'r', encoding='utf-8') as f:
-                            histlist.append(json.dumps(f.readlines()[-count:]))
+                            histlist.append(json.dumps(f.readlines()[-count-offset:-offset if offset else None]))
                         await websocket.send(histlist)
 
                     elif msgtype == "gethistlen":
-                        await websocket.send(str(getlength(f"{channel}.json")))
+                        await websocket.send(json.dumps({"type": "histlen","count": getlength(f"{channel}.json")}))
 
                     elif msgtype == "deletemessage":
                         try:
