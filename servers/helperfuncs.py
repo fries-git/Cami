@@ -14,7 +14,7 @@ def dispnamefromrealname(username):
     return None
 
 def getlength(filename):
-    path = os.path.join(BASE_DIR, filename)
+    path = os.path.join(BASE_DIR, "channels", filename)
     if os.path.exists(path):
         with open(path, "r", encoding="utf-8") as file:
             line_count = sum(1 for line in file)
@@ -23,7 +23,7 @@ def getlength(filename):
         return (None)
 
 def save_to_file(data, filename):
-    path = os.path.join(BASE_DIR, filename)
+    path = os.path.join(BASE_DIR, "channels", filename)
 
     with open(path, "a", encoding="utf-8") as file:
         file.write(str(data) + "\n")

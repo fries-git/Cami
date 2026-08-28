@@ -20,10 +20,35 @@ token = os.getenv("hooktoken")
 channels = {}
 passwords = {}
 
+async def webhookpost(body, username):
+    avatar = f"https://cami.barfpile.dev/userpfp/{username}"
+    data = {
+        "content": body,
+        "username": username,
+        "avatar_url": avatar
+    }
+
+    try:
+        response = await asyncio.to_thread(
+            requests.post,
+            webhook,
+            json=data,
+            headers={"Content-Type": "application/json"},
+            timeout=5,
+        )
+
+        if response.status_code in (200, 201, 204):
+            print("Webhook sent successfully!")
+        else:
+            print(f"Failed to send webhook. Status code: {response.status_code}")
+
+    except Exception as e:
+        print(f"Webhook error: {e}")
+
 def addchannel(channel, password, locked):
     channels[channel] = []
     passwords[channel] = password
-    path = os.path.join(BASE_DIR, f"{channel}.json")
+    path = os.path.join(BASE_DIR, "channels", f"{channel}.json")
     with open(path, "a") as file:
         pass
     if locked and not password:
@@ -93,6 +118,9 @@ async def echo(websocket):
                                                 await ws.send(content)
                                             except Exception as e:
                                                 print("error:", e)
+                                        if webhook:
+                                            if not username == "Rotur Link":
+                                                asyncio.create_task(webhookpost(msg, username))
                                     else:
                                         await ws.send("Invalid token. (Token resets whenever you login.)")
                         else:
@@ -124,7 +152,7 @@ async def echo(websocket):
 
                     elif msgtype == "gethist":
                         histlist = []
-                        path = os.path.join(BASE_DIR,f"{channel}.json")
+                        path = os.path.join(BASE_DIR, "channels", f"{channel}.json")
                         with open(path, 'r', encoding='utf-8') as f:
                             histlist.append(json.dumps(f.readlines()[-count-offset:-offset if offset else None]))
                         await websocket.send(histlist)
@@ -134,7 +162,7 @@ async def echo(websocket):
 
                     elif msgtype == "deletemessage":
                         try:
-                            path = os.path.join(BASE_DIR,f"{channel}.json")
+                            path = os.path.join(BASE_DIR, "channels", f"{channel}.json")
                             with open(path, 'r', encoding='utf-8') as file:
                                 data = [json.loads(line) for line in file if line.strip()]
                                 message = next((item for item in data if item["msgid"] == msgid and item["userid"] == validate(token)), None)
@@ -191,7 +219,7 @@ async def echo(websocket):
                 del channels[channel]
                 del passwords[channel]
 
-                path = os.path.join(BASE_DIR, f"{channel}.json")
+                path = os.path.join(BASE_DIR, "channels" f"{channel}.json")
 
                 if os.path.exists(path):
                     os.remove(path)

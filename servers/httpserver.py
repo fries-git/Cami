@@ -13,7 +13,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 clients = []
 import hashdef as h
 
-db = TinyDB(os.path.join(BASE_DIR, "users.json"))
+db = TinyDB(os.path.join(BASE_DIR, "dbs", "userdata", "users.json"))
 
 app = Flask(__name__)
 CORS(app)
@@ -27,7 +27,7 @@ def register():
     registerpassword = h.hash(password)
     result = db.search(User.username == registername)
     uid = str(u.uuid4())
-    tokendb = TinyDB(os.path.join(BASE_DIR, "tokens.json"))
+    tokendb = TinyDB(os.path.join(BASE_DIR, "dbs", "userdata", "tokens.json"))
     if len(result) == 0:
         if 4 <= len(registername) <= 32 and 4 <= len(password) <= 32:
             token = secrets.token_hex(32)
@@ -52,7 +52,7 @@ def login():
     password = data.get("password")
     result = db.search(User.username == username)
 
-    tokendb = TinyDB(os.path.join(BASE_DIR, "tokens.json"))
+    tokendb = TinyDB(os.path.join(BASE_DIR, "dbs", "userdata", "tokens.json"))
 
     if result and result[0]["password"] == h.hash(password):
         userid = result[0]["userid"]
@@ -88,7 +88,7 @@ def updatebio():
 @app.get("/user/<name>")
 def user(name):
     User = Query()
-    path = os.path.join(BASE_DIR, "users.json")
+    path = os.path.join(BASE_DIR, "dbs", "userdata", "users.json")
     db = TinyDB(path)
     result = db.search(User.username == name) or db.search(User.userid == name)
     if result:
@@ -187,7 +187,7 @@ def socialpost():
     if not uid:
         return "Invalid token", 401
 
-    postdb = TinyDB(os.path.join(BASE_DIR, "posts.json"))
+    postdb = TinyDB(os.path.join(BASE_DIR, "dbs", "social", "posts.json"))
     if len(body) >= 10 and len(body) <= 200:
         postdb.insert({"body": body, "timestamp": unix_time, "userid": uid, "postid": postid})
         print(f"{tokentoname(token)} has just made a new social post!")
@@ -203,7 +203,7 @@ def socialretrieve():
         offset = 0
 
     if count:
-        postdb = TinyDB(os.path.join(BASE_DIR, "posts.json"))
+        postdb = TinyDB(os.path.join(BASE_DIR, "dbs", "social", "posts.json"))
         results = postdb.all()[::-1][offset:offset + count]
         if results:
             print(f"Someone has just queried {count} posts with {offset} offset!")
@@ -218,7 +218,7 @@ def logout():
     data = request.get_json()
     token = data.get("token")
     if token:
-        tokendb = TinyDB(os.path.join(BASE_DIR, "tokens.json"))
+        tokendb = TinyDB(os.path.join(BASE_DIR, "dbs", "userdata", "tokens.json"))
         tokendb.remove(Token.token == token)
         print(f"Goodbye {tokentoname(token)}! Come back soon!")
         return "Logged out", 200
@@ -270,7 +270,7 @@ def setpfp():
 @app.get("/userpfp/<username>")
 def getpfp(username):
     User = Query()
-    path = os.path.join(BASE_DIR, "users.json")
+    path = os.path.join(BASE_DIR, "dbs", "userdata", "users.json")
     db = TinyDB(path)
 
     result = db.search((User.username == username) | (User.userid == username))
@@ -283,21 +283,19 @@ def getpfp(username):
         if os.path.exists(path):
             return send_file(path, mimetype="image/png")
 
-        emptypfp = os.path.join(BASE_DIR, "emptypfp.png")
+        emptypfp = os.path.join(BASE_DIR, "templates", "emptypfp.png")
         return send_file(emptypfp, mimetype="image/png")
 
     return "User doesn't exist.", 404
 
 @app.get("/pfpdeco/<filename>")
 def image(filename):
-
     path = os.path.join(BASE_DIR, "uploads", "avatardecos", f"{filename}.png")
 
     if os.path.exists(path):
         return send_file(path, mimetype="image/png")
 
     return "Image doesn't exist", 404
-
 
 portuse = 5613
 print(f"Running on port {portuse}")
