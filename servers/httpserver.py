@@ -189,9 +189,10 @@ def socialpost():
 
     postdb = TinyDB(os.path.join(BASE_DIR, "dbs", "social", "posts.json"))
     if len(body) >= 10 and len(body) <= 200:
-        postdb.insert({"message": body, "timestamp": unix_time, "userid": uid, "postid": postid})
+        data = {"message": body, "timestamp": unix_time, "userid": uid, "postid": postid}
+        postdb.insert()
         print(f"{tokentoname(token)} has just made a new social post!")
-        return postid, 200
+        return data, 200
     return "Body length is either too short or too long (10-200 characters)", 400
 
 @app.get("/social")
