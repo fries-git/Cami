@@ -20,6 +20,12 @@ token = os.getenv("hooktoken")
 channels = {}
 passwords = {}
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+os.makedirs(os.path.join(BASE_DIR, "channels"), exist_ok=True)
+os.makedirs(os.path.join(BASE_DIR, "dbs", "userdata"), exist_ok=True)
+os.makedirs(os.path.join(BASE_DIR, "uploads", "imagestorage"), exist_ok=True)
+
 async def webhookpost(body, username):
     avatar = f"https://cami.barfpile.dev/userpfp/{username}"
     data = {
