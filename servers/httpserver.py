@@ -178,7 +178,7 @@ def home():
 def socialpost():
     data = request.get_json()
 
-    body = data.get("body")
+    body = data.get("message")
     token = data.get("token")
     uid = validate(token)
     unix_time = int(time.time())
