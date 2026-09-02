@@ -5,7 +5,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def dispnamefromrealname(username):
     User = Query()
-    db = TinyDB(os.path.join(BASE_DIR, "users.json"))
+    db = TinyDB(os.path.join(BASE_DIR, "dbs", "userdata", "users.json"))
     result = db.search(User.username == username)
 
     if result:
@@ -30,7 +30,7 @@ def save_to_file(data, filename):
 
 def edit_user_param(token, field, value):
     userid = validate(token)
-    db = TinyDB(os.path.join(BASE_DIR, "users.json"))
+    db = TinyDB(os.path.join(BASE_DIR, "dbs", "userdata", "users.json"))
     
     if not userid:
         return False, "Invalid token"
@@ -47,7 +47,7 @@ def edit_user_param(token, field, value):
 
 def usernametoid(username):
     User = Query()
-    db = TinyDB(os.path.join(BASE_DIR, "users.json"))
+    db = TinyDB(os.path.join(BASE_DIR, "dbs", "userdata", "users.json"))
     result = db.search(User.username == username)
 
     if result:
@@ -57,7 +57,7 @@ def usernametoid(username):
 
 def validate(token):
     Token = Query()
-    tokendb = TinyDB(os.path.join(BASE_DIR, "tokens.json"))
+    tokendb = TinyDB(os.path.join(BASE_DIR, "dbs", "userdata", "tokens.json"))
     result = tokendb.search(Token.token == token)
 
     if result:
@@ -66,7 +66,7 @@ def validate(token):
     return False
 
 def useridtoname(uid):
-    db = TinyDB(os.path.join(BASE_DIR, "users.json"))
+    db = TinyDB(os.path.join(BASE_DIR, "dbs", "userdata", "users.json"))
     User = Query()
     result = db.search(User.userid == uid)
 
@@ -77,7 +77,7 @@ def useridtoname(uid):
 
 def tokentoname(token):
     Token = Query()
-    tokendb = TinyDB(os.path.join(BASE_DIR, "tokens.json"))
+    tokendb = TinyDB(os.path.join(BASE_DIR, "dbs", "userdata", "tokens.json"))
     result = tokendb.search(Token.token == token)
 
     if result:

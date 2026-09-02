@@ -1,0 +1,6 @@
+Flask
+flask-cors
+Pillow
+waitress
+websockets
+tinydb
