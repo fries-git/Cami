@@ -1,6 +1,6 @@
 # CAMI API Documentation
 
--# Just so we're clear, these are AI-Generated right now, give me a day.
+`Just so we're clear, these are AI-Generated right now, give me a day.`
 
 ## Register
 POST /register `{"username":"<str>","password":"<str>"}`\
