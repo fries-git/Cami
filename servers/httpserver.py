@@ -190,7 +190,7 @@ def socialpost():
 
     postdb = TinyDB(os.path.join(BASE_DIR, "dbs", "social", "posts.json"))
     if len(body) >= 10 and len(body) <= 200:
-        data = {"message": body, "timestamp": unix_time, "userid": uid, "postid": postid}
+        data = {"message": body, "timestamp": unix_time, "userid": uid, "username": tokentoname(token), "postid": postid}
         postdb.insert(data)
         print(f"{tokentoname(token)} has just made a new social post!")
         return makejsonsuccess(data), 200
@@ -291,7 +291,7 @@ def getpfp(username):
     return makejsonerror("User doesn't exist."), 404
 
 @app.get("/pfpdeco/<filename>")
-def image(filename):
+def getimage(filename):
     path = os.path.join(BASE_DIR, "uploads", "avatardecos", f"{filename}.png")
 
     if os.path.exists(path):
@@ -300,7 +300,7 @@ def image(filename):
     return makejsonerror("Image doesn't exist"), 404
 
 @app.post("/pfpdeco/<filename>")
-def image(filename):
+def setimage(filename):
     token = request.form.get("token")
     if validate(token):
         edit_user_param(token, "pfpdeco", filename)
