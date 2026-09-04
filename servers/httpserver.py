@@ -5,7 +5,7 @@ import uuid as u
 import secrets
 from waitress import serve
 import time
-from helperfuncs import validate, tokentoname, usernametoid, edit_user_param
+from helperfuncs import validate, tokentoname, usernametoid, edit_user_param, makejsonsuccess, makejsonerror
 import os
 from PIL import Image
 import json
@@ -37,11 +37,11 @@ def register():
             tokendb.insert({"timestamp": unix_time, "token": token, "userid": uid})
             db.insert({'username': registername, 'displayname': registername, 'password': registerpassword, 'usernum': usernum, 'bio': f'Hello! I am {registername}, and I have not yet setup my bio!', 'avatardeco': None, 'fries': 0, 'userid': uid})
             print(f"{registername} has registered an account! They are user number: {usernum}.")
-            return token, 200
+            return makejsonsuccess(token), 200
         else:
-            return "Password/Username too short or long (4 char minimum, 32 char maximum.)", 403
+            return makejsonerror("Password/Username too short or long (4 char minimum, 32 char maximum.)"), 403
     else:
-        return "Username already in use.", 409
+        return makejsonerror("Username already in use."), 409
 
 @app.post("/login")
 def login():
@@ -64,9 +64,9 @@ def login():
 
         tokendb.insert({"timestamp": unix_time, "token": token, "userid": userid})
         print(f"{username} has just logged in!")
-        return token, 200
+        return makejsonsuccess(token), 200
 
-    return "Username/Password does not exist", 404
+    return makejsonerror("Username/Password does not exist"), 404
 
 @app.post("/updatebio")
 def updatebio():
@@ -76,15 +76,15 @@ def updatebio():
     userid = validate(token)
 
     if not userid:
-        return "Invalid token", 401
+        return makejsonerror("Invalid token"), 401
 
     newbio = data.get("newbio")
     if len(newbio) <= 200:
         edit_user_param(token, "bio", newbio)
         print(f"{tokentoname(token)} has just updated their bio!")
-        return newbio, 200
+        return makejsonsuccess(newbio), 200
     else:
-        return "Bio too long > (200 chars)", 422
+        return makejsonerror("Bio too long > (200 chars)"), 422
 
 @app.get("/user/<name>")
 def user(name):
@@ -95,9 +95,9 @@ def user(name):
     if result:
         userobj = {"username":result[0]["username"], "displayname":result[0]["displayname"], "avatardeco":result[0]["avatardeco"], "userid":result[0]["userid"], "bio": result[0]["bio"], "usernum": result[0]["usernum"], "fries": result[0]["fries"]}
         print(f"{name} has just been queried.")
-        return userobj, 200
+        return makejsonsuccess(userobj), 200
     else:
-        return "User not found", 404
+        return makejsonerror("User not found"), 404
 
 @app.post("/changename")
 def changename():
@@ -110,19 +110,19 @@ def changename():
     validation = validate(token)
 
     if not validation:
-        return "Invalid token", 401
+        return makejsonerror("Invalid token"), 401
 
     if not username or len(username) < 4:
-        return "Username too short (4 char minimum)", 403
+        return makejsonerror("Username too short (4 char minimum)"), 403
 
     if db.search(User.username == username):
-        return "Username already taken", 409
+        return makejsonerror("Username already taken"), 409
 
     if not db.search(User.userid == validation):
-        return "User not found", 404
+        return makejsonerror("User not found"), 404
 
     edit_user_param(token, "username", username)
-    return f"Updated username. Hello {username}!", 200
+    return makejsonsuccess(f"Updated username. Hello {username}!"), 200
 
 @app.post("/changedisplay")
 def changedisplay():
@@ -135,16 +135,16 @@ def changedisplay():
     validation = validate(token)
 
     if not validation:
-        return "Invalid token", 401
+        return makejsonerror("Invalid token"), 401
 
     if not name or len(name) < 4:
-        return "New displayname too short (4 char minimum)", 403
+        return makejsonerror("New displayname too short (4 char minimum)"), 403
 
     if not db.search(User.userid == validation):
-        return "User not found", 404
+        return makejsonerror("User not found"), 404
 
     edit_user_param(token, "displayname", name)
-    return {"cmd": "success", "displayname": name}, 200, 200
+    return makejsonsuccess(name), 200, 200
 
 @app.post("/changepass")
 def changepass():
@@ -163,13 +163,13 @@ def changepass():
         if result:
             if len(data.get("newpass")) >= 4:
                 db.update({"password": newpass}, User.password == oldpass)
-                return "", 200
+                return makejsonsuccess("Updated password."), 200
             else:
-                return "Password too short (4 char minimum)", 403
+                return makejsonerror("Password too short (4 char minimum)"), 403
         else:
-            return "Old password incorrect", 403
+            return makejsonerror("Old password incorrect"), 403
     else:
-        return "Invalid token", 401
+        return makejsonerror("Invalid token"), 401
 
 @app.get("/")
 def home():
@@ -186,15 +186,15 @@ def socialpost():
     postid = str(u.uuid4())
 
     if not uid:
-        return "Invalid token", 401
+        return makejsonerror("Invalid token"), 401
 
     postdb = TinyDB(os.path.join(BASE_DIR, "dbs", "social", "posts.json"))
     if len(body) >= 10 and len(body) <= 200:
         data = {"message": body, "timestamp": unix_time, "userid": uid, "postid": postid}
         postdb.insert(data)
         print(f"{tokentoname(token)} has just made a new social post!")
-        return data, 200
-    return "Body length is either too short or too long (10-200 characters)", 400
+        return makejsonsuccess(data), 200
+    return makejsonerror("Body length is either too short or too long (10-200 characters)"), 400
 
 @app.get("/social")
 def socialretrieve():
@@ -209,9 +209,9 @@ def socialretrieve():
         results = postdb.all()[::-1][offset:offset + count]
         if results:
             print(f"Someone has just queried {count} posts with {offset} offset!")
-            return results, 200
+            return makejsonsuccess(results), 200
         else:
-            return "No posts found", 204
+            return makejsonerror("No posts found"), 204
     return "No count query", 400
 
 @app.post("/logout")
@@ -223,15 +223,15 @@ def logout():
         tokendb = TinyDB(os.path.join(BASE_DIR, "dbs", "userdata", "tokens.json"))
         tokendb.remove(Token.token == token)
         print(f"Goodbye {tokentoname(token)}! Come back soon!")
-        return "Logged out", 200
-    return "Token not found", 400
+        return makejsonsuccess("Logged out"), 200
+    return makejsonerror("Token not found"), 400
 
 @app.get("/users")
 def users():
     users = db.all()
     usernames = [user["username"] for user in users]
 
-    return usernames, 200
+    return makejsonsuccess(usernames), 200
 
 @app.post("/setpfp")
 def setpfp():
@@ -254,20 +254,20 @@ def setpfp():
     
     if token:
         if not image:
-            return {"error": "No image uploaded"}, 400
+            return makejsonerror("No image uploaded"), 400
 
         uid = validate(token)
 
         if not uid:
-            return {"error": "Invalid token"}, 401
+            return makejsonerror("Invalid token"), 401
 
         os.makedirs(os.path.join(BASE_DIR, "uploads", "pfps"), exist_ok=True)
         path = os.path.join(BASE_DIR, "uploads", "pfps", f"{uid}.png")
         img.save(path)
 
-        return {"msg": "Uploaded!", "filename": f"{uid}.png"}, 201
+        return makejsonsuccess("Uploaded"), 201
     else:
-        return "Missing token", 400
+        return makejsonerror("Missing token"), 400
     
 @app.get("/userpfp/<username>")
 def getpfp(username):
@@ -288,7 +288,7 @@ def getpfp(username):
         emptypfp = os.path.join(BASE_DIR, "templates", "emptypfp.png")
         return send_file(emptypfp, mimetype="image/png")
 
-    return "User doesn't exist.", 404
+    return makejsonerror("User doesn't exist."), 404
 
 @app.get("/pfpdeco/<filename>")
 def image(filename):
@@ -297,13 +297,16 @@ def image(filename):
     if os.path.exists(path):
         return send_file(path, mimetype="image/png")
 
-    return "Image doesn't exist", 404
+    return makejsonerror("Image doesn't exist"), 404
 
 @app.post("/pfpdeco/<filename>")
 def image(filename):
     token = request.form.get("token")
     if validate(token):
         edit_user_param(token, "pfpdeco", filename)
+        return makejsonsuccess(str(filename))
+    else:
+        return makejsonerror("Invalid Token")
 
 portuse = 5613
 print(f"Running on port {portuse}")

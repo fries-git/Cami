@@ -3,6 +3,12 @@ import os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))   
 
+def makejsonerror(input):
+    return {"cmd": "error", "message": input}
+
+def makejsonsuccess(input):
+    return {"cmd": "success", "message": input}
+
 def dispnamefromrealname(username):
     User = Query()
     db = TinyDB(os.path.join(BASE_DIR, "dbs", "userdata", "users.json"))
