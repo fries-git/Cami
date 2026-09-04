@@ -8,6 +8,7 @@ import time
 from helperfuncs import validate, tokentoname, usernametoid, edit_user_param
 import os
 from PIL import Image
+import json
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))   
 clients = []
@@ -143,7 +144,7 @@ def changedisplay():
         return "User not found", 404
 
     edit_user_param(token, "displayname", name)
-    return f"Updated username. Hello {name}!", 200
+    return {"cmd": "success", "displayname": name}, 200, 200
 
 @app.post("/changepass")
 def changepass():
@@ -297,6 +298,12 @@ def image(filename):
         return send_file(path, mimetype="image/png")
 
     return "Image doesn't exist", 404
+
+@app.post("/pfpdeco/<filename>")
+def image(filename):
+    token = request.form.get("token")
+    if validate(token):
+        edit_user_param(token, "pfpdeco", filename)
 
 portuse = 5613
 print(f"Running on port {portuse}")
