@@ -5,7 +5,7 @@ import uuid as u
 import secrets
 from waitress import serve
 import time
-from helperfuncs import validate, tokentoname, usernametoid, edit_user_param, makejsonsuccess, makejsonerror
+from helperfuncs import validate, tokentoname, usernametoid, edit_user_param, makejsonsuccess, makejsonerror, search, register, update
 import os
 from PIL import Image
 import json
@@ -13,8 +13,6 @@ import json
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))   
 clients = []
 import hashdef as h
-
-db = TinyDB(os.path.join(BASE_DIR, "dbs", "userdata", "users.json"))
 
 app = Flask(__name__)
 CORS(app)
@@ -26,16 +24,17 @@ def register():
     registername = data.get("username")
     password = data.get("password")
     registerpassword = h.hash(password)
-    result = db.search(User.username == registername)
+    result = search(User.username == registername)
     uid = str(u.uuid4())
     tokendb = TinyDB(os.path.join(BASE_DIR, "dbs", "userdata", "tokens.json"))
     if len(result) == 0:
         if 4 <= len(registername) <= 32 and 4 <= len(password) <= 32:
             token = secrets.token_hex(32)
             unix_time = int(time.time())
+            db = TinyDB(os.path.join(BASE_DIR, "dbs", "userdata", "users.json"))
             usernum = len(db) + 1
             tokendb.insert({"timestamp": unix_time, "token": token, "userid": uid})
-            db.insert({'username': registername, 'displayname': registername, 'password': registerpassword, 'usernum': usernum, 'bio': f'Hello! I am {registername}, and I have not yet setup my bio!', 'avatardeco': None, 'fries': 0, 'userid': uid})
+            register(uid, registername, registerpassword, usernum)
             print(f"{registername} has registered an account! They are user number: {usernum}.")
             return makejsonsuccess(token), 200
         else:
@@ -51,7 +50,7 @@ def login():
 
     username = data.get("username")
     password = data.get("password")
-    result = db.search(User.username == username)
+    result = search(User.username == username)
 
     tokendb = TinyDB(os.path.join(BASE_DIR, "dbs", "userdata", "tokens.json"))
 
@@ -90,8 +89,7 @@ def updatebio():
 def user(name):
     User = Query()
     path = os.path.join(BASE_DIR, "dbs", "userdata", "users.json")
-    db = TinyDB(path)
-    result = db.search(User.username == name) or db.search(User.userid == name)
+    result = search(User.username == name) or search(User.userid == name)
     if result:
         userobj = {"username":result[0]["username"], "displayname":result[0]["displayname"], "avatardeco":result[0]["avatardeco"], "userid":result[0]["userid"], "bio": result[0]["bio"], "usernum": result[0]["usernum"], "fries": result[0]["fries"]}
         print(f"{name} has just been queried.")
@@ -115,10 +113,10 @@ def changename():
     if not username or len(username) < 4:
         return makejsonerror("Username too short (4 char minimum)"), 403
 
-    if db.search(User.username == username):
+    if search(User.username == username):
         return makejsonerror("Username already taken"), 409
 
-    if not db.search(User.userid == validation):
+    if not search(User.userid == validation):
         return makejsonerror("User not found"), 404
 
     edit_user_param(token, "username", username)
@@ -140,7 +138,7 @@ def changedisplay():
     if not name or len(name) < 4:
         return makejsonerror("New displayname too short (4 char minimum)"), 403
 
-    if not db.search(User.userid == validation):
+    if not search(User.userid == validation):
         return makejsonerror("User not found"), 404
 
     edit_user_param(token, "displayname", name)
@@ -154,15 +152,15 @@ def changepass():
     oldpass = h.hash(data.get("oldpass"))
     newpass = h.hash(data.get("newpass"))
     token = request.args.get("token")
-
+    
     validation = validate(token)
 
     if validation:
-        result = db.search(User.password == oldpass)
+        result = search(User.password == oldpass)
 
         if result:
             if len(data.get("newpass")) >= 4:
-                db.update({"password": newpass}, User.password == oldpass)
+                update({"password": newpass}, User.password == oldpass)
                 return makejsonsuccess("Updated password."), 200
             else:
                 return makejsonerror("Password too short (4 char minimum)"), 403
@@ -228,6 +226,7 @@ def logout():
 
 @app.get("/users")
 def users():
+    db = TinyDB(os.path.join(BASE_DIR, "dbs", "userdata", "users.json"))
     users = db.all()
     usernames = [user["username"] for user in users]
 
@@ -272,10 +271,8 @@ def setpfp():
 @app.get("/userpfp/<username>")
 def getpfp(username):
     User = Query()
-    path = os.path.join(BASE_DIR, "dbs", "userdata", "users.json")
-    db = TinyDB(path)
 
-    result = db.search((User.username == username) | (User.userid == username))
+    result = search((User.username == username) | (User.userid == username))
 
     if result:
         userid = result[0]["userid"]

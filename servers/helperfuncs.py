@@ -3,6 +3,18 @@ import os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))   
 
+def update(param):
+    db = TinyDB(os.path.join(BASE_DIR, "dbs", "userdata", "users.json"))
+    db.update(param)
+
+def search(param):
+    db = TinyDB(os.path.join(BASE_DIR, "dbs", "userdata", "users.json"))
+    db.search(param)
+
+def register(uid, registername, registerpassword, usernum, db):
+    db = TinyDB(os.path.join(BASE_DIR, "dbs", "userdata", "users.json"))
+    db.insert({'username': registername, 'displayname': registername, 'password': registerpassword, 'usernum': usernum, 'bio': f'Hello! I am {registername}, and I have not yet setup my bio!', 'avatardeco': None, 'fries': 0, 'userid': uid})
+
 def makejsonerror(input):
     return {"cmd": "error", "message": input}
 
