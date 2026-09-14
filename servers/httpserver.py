@@ -18,7 +18,7 @@ app = Flask(__name__)
 CORS(app)
 
 @app.post("/register")
-def register():
+def registerpath():
     data = request.get_json()
     User = Query()
     registername = data.get("username")

@@ -4,7 +4,7 @@ import sys
 http = subprocess.Popen([sys.executable, "servers/httpserver.py"])
 img = subprocess.Popen([sys.executable, "servers/imageserver.py"])
 ws = subprocess.Popen([sys.executable, "servers/websocketserver.py"])
-game = subprocess.Popen([sys.executable, "servers/gameserver.py"])
+game = subprocess.Popen([sys.executable, "servers/fungicideserver.py"])
 
 try:
     http.wait()
