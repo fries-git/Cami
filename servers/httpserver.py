@@ -5,7 +5,7 @@ import uuid as u
 import secrets
 from waitress import serve
 import time
-from helperfuncs import validate, tokentoname, usernametoid, edit_user_param, makejsonsuccess, makejsonerror, search, register, update
+from helperfuncs import validate, tokentoname, usernametoid, edit_user_param, makejsonsuccess, makejsonerror, search, socialsearch, register, update, login
 import os
 from PIL import Image
 import json
@@ -26,49 +26,30 @@ def registerpath():
     registerpassword = h.hash(password)
     result = search(User.username == registername)
     uid = str(u.uuid4())
-    tokendb = TinyDB(os.path.join(BASE_DIR, "dbs", "userdata", "tokens.json"))
     if len(result) == 0:
         if 4 <= len(registername) <= 32 and 4 <= len(password) <= 32:
-            token = secrets.token_hex(32)
-            unix_time = int(time.time())
-            db = TinyDB(os.path.join(BASE_DIR, "dbs", "userdata", "users.json"))
-            usernum = len(db) + 1
-            tokendb.insert({"timestamp": unix_time, "token": token, "userid": uid})
-            register(uid, registername, registerpassword, usernum)
-            print(f"{registername} has registered an account! They are user number: {usernum}.")
-            return makejsonsuccess(token), 200
+            return(register(uid, registername, registerpassword))
         else:
             return makejsonerror("Password/Username too short or long (4 char minimum, 32 char maximum.)"), 403
     else:
         return makejsonerror("Username already in use."), 409
 
 @app.post("/login")
-def login():
+def loginpath():
     User = Query()
-    Token = Query()
     data = request.get_json()
 
     username = data.get("username")
     password = data.get("password")
     result = search(User.username == username)
 
-    tokendb = TinyDB(os.path.join(BASE_DIR, "dbs", "userdata", "tokens.json"))
-
     if result and result[0]["password"] == h.hash(password):
-        userid = result[0]["userid"]
-        tokendb.remove(Token.userid == userid)
-
-        token = secrets.token_hex(32)
-        unix_time = int(time.time())
-
-        tokendb.insert({"timestamp": unix_time, "token": token, "userid": userid})
-        print(f"{username} has just logged in!")
-        return makejsonsuccess(token), 200
+        return login(result, username, password), 200
 
     return makejsonerror("Username/Password does not exist"), 404
 
 @app.post("/updatebio")
-def updatebio():
+def updatebiopath():
     data = request.get_json()
 
     token = data.get("token")
@@ -86,7 +67,7 @@ def updatebio():
         return makejsonerror("Bio too long > (200 chars)"), 422
 
 @app.get("/user/<name>")
-def user(name):
+def userpath(name):
     User = Query()
     path = os.path.join(BASE_DIR, "dbs", "userdata", "users.json")
     result = search(User.username == name) or search(User.userid == name)
@@ -98,7 +79,7 @@ def user(name):
         return makejsonerror("User not found"), 404
 
 @app.post("/changename")
-def changename():
+def changenamepath():
     data = request.get_json()
     User = Query()
 
@@ -123,7 +104,7 @@ def changename():
     return makejsonsuccess(f"Updated username. Hello {username}!"), 200
 
 @app.post("/changedisplay")
-def changedisplay():
+def changedisplaypath():
     data = request.get_json()
     User = Query()
 
@@ -145,7 +126,7 @@ def changedisplay():
     return makejsonsuccess(name), 200, 200
 
 @app.post("/changepass")
-def changepass():
+def changepasspath():
     data = request.get_json()
     User = Query()
 
@@ -170,11 +151,11 @@ def changepass():
         return makejsonerror("Invalid token"), 401
 
 @app.get("/")
-def home():
+def homepath():
     return render_template("main.html"), 200    
 
 @app.post("/social")
-def socialpost():
+def socialpostpath():
     data = request.get_json()
 
     body = data.get("message")
@@ -195,7 +176,7 @@ def socialpost():
     return makejsonerror("Body length is either too short or too long (10-200 characters)"), 400
 
 @app.get("/social")
-def socialretrieve():
+def socialretrievepath():
     count = int(request.args.get("count"))
     if request.args.get("offset"):
         offset = int(request.args.get("offset"))
@@ -212,8 +193,21 @@ def socialretrieve():
             return makejsonerror("No posts found"), 204
     return "No count query", 400
 
+@app.get("/search/message/<query>")
+def searchmsgpath(query):
+    return socialsearch(query, "body"),200
+
+@app.get("/search/userid/<query>")
+def searchuseridpath(query):
+    return socialsearch(query, "userid"),200
+
+@app.get("/search/username/<query>")
+def searchusernamepath(query):
+    query = usernametoid(query)
+    return socialsearch(query, "userid"),200
+
 @app.post("/logout")
-def logout():
+def logoutpath():
     Token = Query()
     data = request.get_json()
     token = data.get("token")
@@ -225,7 +219,7 @@ def logout():
     return makejsonerror("Token not found"), 400
 
 @app.get("/users")
-def users():
+def userspath():
     db = TinyDB(os.path.join(BASE_DIR, "dbs", "userdata", "users.json"))
     users = db.all()
     usernames = [user["username"] for user in users]
@@ -233,7 +227,7 @@ def users():
     return makejsonsuccess(usernames), 200
 
 @app.post("/setpfp")
-def setpfp():
+def setpfppath():
     token = request.form.get("token")
     image = request.files.get("image")
 
@@ -269,7 +263,7 @@ def setpfp():
         return makejsonerror("Missing token"), 400
     
 @app.get("/userpfp/<username>")
-def getpfp(username):
+def getpfppath(username):
     User = Query()
 
     result = search((User.username == username) | (User.userid == username))
@@ -288,7 +282,7 @@ def getpfp(username):
     return makejsonerror("User doesn't exist."), 404
 
 @app.get("/pfpdeco/<filename>")
-def getimage(filename):
+def getimagepath(filename):
     path = os.path.join(BASE_DIR, "uploads", "avatardecos", f"{filename}.png")
 
     if os.path.exists(path):
@@ -297,7 +291,7 @@ def getimage(filename):
     return makejsonerror("Image doesn't exist"), 404
 
 @app.post("/pfpdeco/<filename>")
-def setimage(filename):
+def setimagepath(filename):
     token = request.form.get("token")
     if validate(token):
         edit_user_param(token, "pfpdeco", filename)

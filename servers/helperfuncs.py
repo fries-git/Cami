@@ -1,5 +1,7 @@
 from tinydb import TinyDB, Query
 import os
+import secrets
+import time
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))   
 
@@ -7,13 +9,43 @@ def update(param, condition):
     db = TinyDB(os.path.join(BASE_DIR, "dbs", "userdata", "users.json"))
     db.update(param, condition)
 
+def login(result, username):
+    tokendb = TinyDB(os.path.join(BASE_DIR, "dbs", "userdata", "tokens.json"))
+    Token = Query()
+
+
+    userid = result[0]["userid"]
+    tokendb.remove(Token.userid == userid)
+
+    token = secrets.token_hex(32)
+    unix_time = int(time.time())
+
+    tokendb.insert({"timestamp": unix_time, "token": token, "userid": userid})
+    print(f"{username} has just logged in!")
+    return makejsonsuccess(token), 200
+
+def socialsearch(query, type):
+    db = TinyDB(os.path.join(BASE_DIR, "dbs", "social", "posts.json"))
+    post = Query()
+    return db.search(post[type].test(lambda x: query.lower() in x.lower()))
+
 def search(param):
     db = TinyDB(os.path.join(BASE_DIR, "dbs", "userdata", "users.json"))
     return db.search(param)
 
 def register(uid, registername, registerpassword, usernum):
+    tokendb = TinyDB(os.path.join(BASE_DIR, "dbs", "userdata", "tokens.json"))
+    token = secrets.token_hex(32)
+    unix_time = int(time.time())
+    db = TinyDB(os.path.join(BASE_DIR, "dbs", "userdata", "users.json"))
+    usernum = len(db) + 1
+    tokendb.insert({"timestamp": unix_time, "token": token, "userid": uid})
+    print(f"{registername} has registered an account! They are user number: {usernum}.")
+    return makejsonsuccess(token), 200
+
     db = TinyDB(os.path.join(BASE_DIR, "dbs", "userdata", "users.json"))
     db.insert({'username': registername, 'displayname': registername, 'password': registerpassword, 'usernum': usernum, 'bio': f'Hello! I am {registername}, and I have not yet setup my bio!', 'avatardeco': None, 'fries': 0, 'userid': uid})
+
 def makejsonerror(input):
     return {"cmd": "error", "message": input}
 

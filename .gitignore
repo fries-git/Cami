@@ -5,3 +5,5 @@ test.py
 servers/uploads/
 *.env
 *.js
+servers\fungicideserver.py
+Fungicide Remastered Multiplayer.html
