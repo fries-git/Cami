@@ -44,7 +44,7 @@ def loginpath():
     result = search(User.username == username)
 
     if result and result[0]["password"] == h.hash(password):
-        return login(result, username, password), 200
+        return makejsonsuccess(login(result, username)) , 200
 
     return makejsonerror("Username/Password does not exist"), 404
 
@@ -172,6 +172,7 @@ def socialpostpath():
         data = {"message": body, "timestamp": unix_time, "userid": uid, "username": tokentoname(token), "postid": postid}
         postdb.insert(data)
         print(f"{tokentoname(token)} has just made a new social post!")
+        postdb.close()
         return makejsonsuccess(data), 200
     return makejsonerror("Body length is either too short or too long (10-200 characters)"), 400
 
@@ -188,14 +189,17 @@ def socialretrievepath():
         results = postdb.all()[::-1][offset:offset + count]
         if results:
             print(f"Someone has just queried {count} posts with {offset} offset!")
+            postdb.close()
             return makejsonsuccess(results), 200
         else:
+            postdb.close()
             return makejsonerror("No posts found"), 204
+    postdb.close()
     return "No count query", 400
 
 @app.get("/search/message/<query>")
 def searchmsgpath(query):
-    return socialsearch(query, "body"),200
+    return socialsearch(query, "message"),200
 
 @app.get("/search/userid/<query>")
 def searchuseridpath(query):
@@ -215,7 +219,9 @@ def logoutpath():
         tokendb = TinyDB(os.path.join(BASE_DIR, "dbs", "userdata", "tokens.json"))
         tokendb.remove(Token.token == token)
         print(f"Goodbye {tokentoname(token)}! Come back soon!")
+        tokendb.close()
         return makejsonsuccess("Logged out"), 200
+    tokendb.close()
     return makejsonerror("Token not found"), 400
 
 @app.get("/users")
@@ -223,7 +229,7 @@ def userspath():
     db = TinyDB(os.path.join(BASE_DIR, "dbs", "userdata", "users.json"))
     users = db.all()
     usernames = [user["username"] for user in users]
-
+    db.close()
     return makejsonsuccess(usernames), 200
 
 @app.post("/setpfp")

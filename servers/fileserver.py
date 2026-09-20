@@ -5,11 +5,41 @@ from helperfuncs import validate, makejsonsuccess, makejsonerror
 import os
 from pathlib import Path
 from waitress import serve
+from mutagen.id3 import ID3, TXXX
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))  
 
 app = Flask(__name__)
 CORS(app)
+
+@app.post("/uploadmusic")
+def uploadsong():
+    token = request.form.get("token")
+    song = request.files.get("song")
+    filename = request.form.get("filename")
+
+    if validate(token):
+        if not song:
+            return makejsonerror("No song uploaded"), 400
+
+        try:
+            userid = validate(token)
+
+            filepath = os.path.join(BASE_DIR, "uploads", "music", filename)
+            song.save(filepath)
+
+            tags = ID3(filepath)
+            tags.add(TXXX(encoding=3, desc="cami_userid", text=str(userid)))
+            tags.add(TXXX(encoding=3, desc="cami_filename", text=filename))
+            tags.save()
+
+            print(f"Got song: {filename}")
+
+            return makejsonsuccess("Song uploaded"), 200
+
+        except Exception as e:
+            print(e)
+            return makejsonerror("Invalid or incomplete song"), 400
 
 @app.post("/uploadimage")
 def uploadimage():
@@ -82,6 +112,15 @@ def uploadimage():
     else:
         return "Missing/Invalid token", 400
     return "Unhandled Error", 400
+
+@app.get("/song/<filename>")
+def song(filename):
+
+    mp3_path = os.path.join(BASE_DIR, "uploads", "musicstorage", f"{filename}.mp3")
+
+    if os.path.exists(mp3_path):
+        return send_file(mp3_path, mimetype="audio/mpeg")
+    return makejsonerror("Song doesn't exist"), 404
 
 @app.get("/image/<filename>")
 def image(filename):

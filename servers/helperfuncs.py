@@ -8,11 +8,11 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 def update(param, condition):
     db = TinyDB(os.path.join(BASE_DIR, "dbs", "userdata", "users.json"))
     db.update(param, condition)
+    db.close()
 
 def login(result, username):
     tokendb = TinyDB(os.path.join(BASE_DIR, "dbs", "userdata", "tokens.json"))
     Token = Query()
-
 
     userid = result[0]["userid"]
     tokendb.remove(Token.userid == userid)
@@ -21,17 +21,22 @@ def login(result, username):
     unix_time = int(time.time())
 
     tokendb.insert({"timestamp": unix_time, "token": token, "userid": userid})
+    tokendb.close()
     print(f"{username} has just logged in!")
-    return makejsonsuccess(token), 200
+    return {"token": token}
 
 def socialsearch(query, type):
     db = TinyDB(os.path.join(BASE_DIR, "dbs", "social", "posts.json"))
     post = Query()
-    return db.search(post[type].test(lambda x: query.lower() in x.lower()))
-
+    data = db.search(post[type].test(lambda x: query.lower() in x.lower()))
+    db.close()
+    return data
+    
 def search(param):
     db = TinyDB(os.path.join(BASE_DIR, "dbs", "userdata", "users.json"))
-    return db.search(param)
+    data = db.search(param)
+    db.close()
+    return data
 
 def register(uid, registername, registerpassword, usernum):
     tokendb = TinyDB(os.path.join(BASE_DIR, "dbs", "userdata", "tokens.json"))
@@ -41,10 +46,10 @@ def register(uid, registername, registerpassword, usernum):
     usernum = len(db) + 1
     tokendb.insert({"timestamp": unix_time, "token": token, "userid": uid})
     print(f"{registername} has registered an account! They are user number: {usernum}.")
-    return makejsonsuccess(token), 200
-
-    db = TinyDB(os.path.join(BASE_DIR, "dbs", "userdata", "users.json"))
     db.insert({'username': registername, 'displayname': registername, 'password': registerpassword, 'usernum': usernum, 'bio': f'Hello! I am {registername}, and I have not yet setup my bio!', 'avatardeco': None, 'fries': 0, 'userid': uid})
+    db.close()
+    tokendb.close()
+    return makejsonsuccess(token), 200   
 
 def makejsonerror(input):
     return {"cmd": "error", "message": input}
@@ -56,7 +61,7 @@ def dispnamefromrealname(username):
     User = Query()
     db = TinyDB(os.path.join(BASE_DIR, "dbs", "userdata", "users.json"))
     result = db.search(User.username == username)
-
+    db.close()
     if result:
         return result[0]["displayname"]
 
@@ -82,16 +87,18 @@ def edit_user_param(token, field, value):
     db = TinyDB(os.path.join(BASE_DIR, "dbs", "userdata", "users.json"))
     
     if not userid:
+        db.close()
         return False, "Invalid token"
 
     User = Query()
     result = db.search(User.userid == userid)
 
     if not result:
+        db.close()
         return False, "User not found"
 
     db.update({field: value}, User.userid == userid)
-
+    db.close()
     return True, "Updated successfully"
 
 def usernametoid(username):
@@ -100,8 +107,9 @@ def usernametoid(username):
     result = db.search(User.username == username)
 
     if result:
+        db.close()
         return result[0]["userid"]
-
+    db.close()
     return None
 
 def validate(token):
@@ -110,8 +118,9 @@ def validate(token):
     result = tokendb.search(Token.token == token)
 
     if result:
+        tokendb.close()
         return result[0]["userid"]
-
+    tokendb.close()
     return False
 
 def useridtoname(uid):
@@ -120,8 +129,9 @@ def useridtoname(uid):
     result = db.search(User.userid == uid)
 
     if result:
+        db.close()
         return result[0]["username"]
-
+    db.close()
     return False
 
 def tokentoname(token):
@@ -131,6 +141,7 @@ def tokentoname(token):
 
     if result:
         uid = result[0]["userid"]
+        tokendb.close()
         return useridtoname(uid)
-
+    tokendb.close()
     return False
