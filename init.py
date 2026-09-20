@@ -10,9 +10,9 @@ try:
     http.wait()
     file.wait()
     ws.wait()
-    #game.wait()
+    # game.wait()
 except KeyboardInterrupt:
     http.terminate()
     file.terminate()
     ws.terminate()
-    #game.terminate()
+    # game.terminate()

@@ -9,6 +9,7 @@ from helperfuncs import validate, tokentoname, usernametoid, edit_user_param, ma
 import os
 from PIL import Image
 import json
+import logger
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))   
 clients = []
@@ -61,7 +62,7 @@ def updatebiopath():
     newbio = data.get("newbio")
     if len(newbio) <= 200:
         edit_user_param(token, "bio", newbio)
-        print(f"{tokentoname(token)} has just updated their bio!")
+        logger.success(f"{tokentoname(token)} has just updated their bio!")
         return makejsonsuccess(newbio), 200
     else:
         return makejsonerror("Bio too long > (200 chars)"), 422
@@ -73,7 +74,7 @@ def userpath(name):
     result = search(User.username == name) or search(User.userid == name)
     if result:
         userobj = {"username":result[0]["username"], "displayname":result[0]["displayname"], "avatardeco":result[0]["avatardeco"], "userid":result[0]["userid"], "bio": result[0]["bio"], "usernum": result[0]["usernum"], "fries": result[0]["fries"]}
-        print(f"{name} has just been queried.")
+        logger.info(f"{name} has just been queried.")
         return makejsonsuccess(userobj), 200
     else:
         return makejsonerror("User not found"), 404
@@ -171,7 +172,7 @@ def socialpostpath():
     if len(body) >= 10 and len(body) <= 200:
         data = {"message": body, "timestamp": unix_time, "userid": uid, "username": tokentoname(token), "postid": postid}
         postdb.insert(data)
-        print(f"{tokentoname(token)} has just made a new social post!")
+        logger.success(f"{tokentoname(token)} has just made a new social post!")
         postdb.close()
         return makejsonsuccess(data), 200
     return makejsonerror("Body length is either too short or too long (10-200 characters)"), 400
@@ -188,7 +189,7 @@ def socialretrievepath():
         postdb = TinyDB(os.path.join(BASE_DIR, "dbs", "social", "posts.json"))
         results = postdb.all()[::-1][offset:offset + count]
         if results:
-            print(f"Someone has just queried {count} posts with {offset} offset!")
+            logger.info(f"Someone has just queried {count} posts with {offset} offset!")
             postdb.close()
             return makejsonsuccess(results), 200
         else:
@@ -218,7 +219,7 @@ def logoutpath():
     if token:
         tokendb = TinyDB(os.path.join(BASE_DIR, "dbs", "userdata", "tokens.json"))
         tokendb.remove(Token.token == token)
-        print(f"Goodbye {tokentoname(token)}! Come back soon!")
+        logger.info(f"Goodbye {tokentoname(token)}! Come back soon!")
         tokendb.close()
         return makejsonsuccess("Logged out"), 200
     tokendb.close()
@@ -306,7 +307,7 @@ def setimagepath(filename):
         return makejsonerror("Invalid Token")
 
 portuse = 5613
-print(f"Running on port {portuse}")
+logger.info(f"Running on port {portuse}")
 
 if __name__ == "__main__":
     serve(app, host="0.0.0.0", port=portuse, threads = 8)

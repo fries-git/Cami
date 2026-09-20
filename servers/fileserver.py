@@ -1,11 +1,14 @@
 from flask import Flask, request, Response, send_file, render_template
 from flask_cors import CORS
 from PIL import Image, ImageSequence
-from helperfuncs import validate, makejsonsuccess, makejsonerror
+from helperfuncs import validate, makejsonsuccess, makejsonerror, useridtoname
 import os
 from pathlib import Path
 from waitress import serve
 from mutagen.id3 import ID3, TXXX
+import time
+import logger
+from mp32ogg import mp3toogg
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))  
 
@@ -17,29 +20,24 @@ def uploadsong():
     token = request.form.get("token")
     song = request.files.get("song")
     filename = request.form.get("filename")
-
     if validate(token):
         if not song:
             return makejsonerror("No song uploaded"), 400
 
         try:
             userid = validate(token)
-
-            filepath = os.path.join(BASE_DIR, "uploads", "music", filename)
-            song.save(filepath)
-
-            tags = ID3(filepath)
-            tags.add(TXXX(encoding=3, desc="cami_userid", text=str(userid)))
-            tags.add(TXXX(encoding=3, desc="cami_filename", text=filename))
-            tags.save()
-
-            print(f"Got song: {filename}")
-
-            return makejsonsuccess("Song uploaded"), 200
+            mp3path = os.path.join(BASE_DIR, "uploads", "musicstorage", filename)      
+            oggpath = os.path.splitext(mp3path)[0] + ".ogg"
 
         except Exception as e:
-            print(e)
+            logger.error(e)
             return makejsonerror("Invalid or incomplete song"), 400
+        
+        song.save(mp3path)
+        mp3toogg(mp3path, oggpath, "3")
+        logger.success(f"{useridtoname(userid)} just uploaded: {filename} at: {time.time()}")
+        os.remove(mp3path)      
+        return makejsonsuccess(filename), 200
 
 @app.post("/uploadimage")
 def uploadimage():
@@ -115,11 +113,11 @@ def uploadimage():
 
 @app.get("/song/<filename>")
 def song(filename):
+    filepath = os.path.join(BASE_DIR, "uploads", "musicstorage", f"{filename}.ogg")
 
-    mp3_path = os.path.join(BASE_DIR, "uploads", "musicstorage", f"{filename}.mp3")
+    if os.path.exists(filepath):
+        return send_file(filepath)
 
-    if os.path.exists(mp3_path):
-        return send_file(mp3_path, mimetype="audio/mpeg")
     return makejsonerror("Song doesn't exist"), 404
 
 @app.get("/image/<filename>")
@@ -133,8 +131,10 @@ def image(filename):
     )
 
     if os.path.exists(png_path):
+        logger.info(f"Someone has queried: {filename}.png")
         return send_file(png_path, mimetype="image/png")
     if os.path.exists(gif_path):
+        logger.info(f"Someone has queried: {filename}.gif")
         return send_file(gif_path, mimetype="gif/png")
 
     return makejsonerror("Image doesn't exist"), 404
@@ -150,7 +150,7 @@ def get_gif(filename):
     return send_file(path, mimetype="image/gif")
 
 portuse = 5614
-print(f"Running on port {portuse}")
+logger.info(f"Running on port {portuse}")
 
 if __name__ == "__main__":
     serve(app, host="0.0.0.0", port=portuse, threads = 8)

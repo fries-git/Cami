@@ -2,6 +2,7 @@ from tinydb import TinyDB, Query
 import os
 import secrets
 import time
+import logger
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))   
 
@@ -22,7 +23,7 @@ def login(result, username):
 
     tokendb.insert({"timestamp": unix_time, "token": token, "userid": userid})
     tokendb.close()
-    print(f"{username} has just logged in!")
+    logger.info(f"{username} has just logged in!")
     return {"token": token}
 
 def socialsearch(query, type):
@@ -45,7 +46,7 @@ def register(uid, registername, registerpassword, usernum):
     db = TinyDB(os.path.join(BASE_DIR, "dbs", "userdata", "users.json"))
     usernum = len(db) + 1
     tokendb.insert({"timestamp": unix_time, "token": token, "userid": uid})
-    print(f"{registername} has registered an account! They are user number: {usernum}.")
+    logger.register(f"{registername} has registered an account! They are user number: {usernum}.")
     db.insert({'username': registername, 'displayname': registername, 'password': registerpassword, 'usernum': usernum, 'bio': f'Hello! I am {registername}, and I have not yet setup my bio!', 'avatardeco': None, 'fries': 0, 'userid': uid})
     db.close()
     tokendb.close()
