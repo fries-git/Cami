@@ -162,6 +162,10 @@ def homepath():
     db.close()
     return render_template("main.html", usercount=usercount), 200    
 
+@app.get("/demo")
+def demopath():
+    return render_template("democlient.html") 
+
 @app.post("/social")
 def socialpostpath():
     data = request.get_json()
