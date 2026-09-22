@@ -27,11 +27,18 @@ def login(result, username):
     return {"token": token}
 
 def socialsearch(query, type):
-    db = TinyDB(os.path.join(BASE_DIR, "dbs", "social", "posts.json"))
-    post = Query()
-    data = db.search(post[type].test(lambda x: query.lower() in x.lower()))
-    db.close()
-    return data
+    if query == "postid":
+        db = TinyDB(os.path.join(BASE_DIR, "dbs", "social", "posts.json"))
+        post = Query()
+        data = db.search(post[type].test(lambda x: query in x))
+        db.close()
+        return data
+    else:
+        db = TinyDB(os.path.join(BASE_DIR, "dbs", "social", "posts.json"))
+        post = Query()
+        data = db.search(post[type].test(lambda x: query.lower() in x.lower()))
+        db.close()
+        return data
     
 def search(param):
     db = TinyDB(os.path.join(BASE_DIR, "dbs", "userdata", "users.json"))
@@ -101,13 +108,13 @@ def edit_user_param(userid, field, value):
     db.close()
     return True, "Updated successfully"
 
-def searchparam(userid, param, create):
+def searchparam(userid, param, create, createvalue):
     midput = search(Query().userid == userid)
     if not midput:
         return
 
     if param not in midput[0] and create:
-        edit_user_param(userid, param, 0)
+        edit_user_param(userid, param, createvalue)
         return 0
     
     output = midput[0][param]

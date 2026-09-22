@@ -215,6 +215,10 @@ def searchusernamepath(query):
     query = usernametoid(query)
     return socialsearch(query, "userid"),200
 
+@app.get("/search/postid/<query>")
+def searchpostidpath(query):
+    return socialsearch(query, "postid"),200
+
 @app.post("/logout")
 def logoutpath():
     Token = Query()
@@ -342,7 +346,7 @@ def setimagepath(filename):
     userid = validate(token)
     path = os.path.join(BASE_DIR, "uploads", "avatardecos", f"{filename}.png")
     if os.path.exists(path):
-        userfries = searchparam(userid, "fries", False)
+        userfries = searchparam(userid, "fries", False, 0)
         decorcost = 5
 
         try:
@@ -369,10 +373,10 @@ def dailypath():
         data = request.get_json()
         token = data.get("token")
         userid = validate(token)
-        timestamp = searchparam(userid, "dailytimestamp", True)
+        timestamp = searchparam(userid, "dailytimestamp", True, 0)
         if time.time() - timestamp >= cooldown:
             try:
-                fries = searchparam(userid, "fries", False)
+                fries = searchparam(userid, "fries", False, 0   )
                 edit_user_param(userid, "dailytimestamp", time.time())
                 edit_user_param(userid, "fries", fries + 10)
                 return makejsonsuccess(f"Daily claimed! {fries} -> {fries + 10}"), 200
