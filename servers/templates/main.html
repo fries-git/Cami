@@ -50,8 +50,10 @@
 <body>
     <h1>Cami</h1>
     <h3>Welcome to Cami!</h3>
-    <p>
-        Please, read
-        <a href="https://github.com/fries-git/Cami/tree/main/docs">the documentation</a> for usage as a dev!</p>
+
+    <img src="{{ url_for('static', filename='cami8831.gif') }}" alt="Cami">
+    
+    <p>Please, read <a href="https://github.com/fries-git/Cami/tree/main/docs">the documentation</a> for usage as a dev!</p>
+    <p>There are <b>{{usercount}}</b> users registered!</p>
 </body>
 </html>

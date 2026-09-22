@@ -5,11 +5,12 @@ import uuid as u
 import secrets
 from waitress import serve
 import time
-from helperfuncs import validate, tokentoname, usernametoid, edit_user_param, makejsonsuccess, makejsonerror, search, socialsearch, register, update, login
+from helperfuncs import *
 import os
 from PIL import Image
 import json
 import logger
+import math
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))   
 clients = []
@@ -61,7 +62,7 @@ def updatebiopath():
 
     newbio = data.get("newbio")
     if len(newbio) <= 200:
-        edit_user_param(token, "bio", newbio)
+        edit_user_param(validate(token), "bio", newbio)
         logger.success(f"{tokentoname(token)} has just updated their bio!")
         return makejsonsuccess(newbio), 200
     else:
@@ -101,7 +102,7 @@ def changenamepath():
     if not search(User.userid == validation):
         return makejsonerror("User not found"), 404
 
-    edit_user_param(token, "username", username)
+    edit_user_param(validate(token), "username", username)
     return makejsonsuccess(f"Updated username. Hello {username}!"), 200
 
 @app.post("/changedisplay")
@@ -123,7 +124,7 @@ def changedisplaypath():
     if not search(User.userid == validation):
         return makejsonerror("User not found"), 404
 
-    edit_user_param(token, "displayname", name)
+    edit_user_param(validate(token), "displayname", name)
     return makejsonsuccess(name), 200, 200
 
 @app.post("/changepass")
@@ -153,7 +154,10 @@ def changepasspath():
 
 @app.get("/")
 def homepath():
-    return render_template("main.html"), 200    
+    db = TinyDB(os.path.join(BASE_DIR, "dbs", "userdata", "users.json"))
+    usercount = len(db)
+    db.close()
+    return render_template("main.html", usercount=usercount), 200    
 
 @app.post("/social")
 def socialpostpath():
@@ -224,6 +228,40 @@ def logoutpath():
         return makejsonsuccess("Logged out"), 200
     tokendb.close()
     return makejsonerror("Token not found"), 400
+
+@app.post("/transferfries")
+def transferfriespath():
+    try:
+        data = request.get_json()
+
+        token = data.get("token")
+        name = data.get("recipientname")
+        recipientid = usernametoid(name)
+        print(recipientid)
+        count = data.get("count")
+
+        userid = validate(token)
+
+        searchresp1 = search(Query().userid == userid)[0]
+        userfries = searchresp1["fries"]
+
+        searchresp2 = search(Query().userid == recipientid)[0]
+        recipfries = searchresp2["fries"]
+        try:
+            if userfries >= count:
+                edit_user_param(recipientid, "fries", recipfries + count)
+                edit_user_param(userid, "fries", userfries - count)
+        except Exception as e:
+            edit_user_param(recipientid, "fries", recipfries)
+            edit_user_param(userid, "fries", userfries)
+            logger.error(e)
+            return makejsonerror("Fries transfer error. Unknown error."), 500
+        
+    except Exception as e:
+        logger.error(e)
+        return makejsonerror("Internal server error"), 500
+
+    return makejsonsuccess(f"{count} fries transfered to {name}.")
 
 @app.get("/users")
 def userspath():
@@ -299,12 +337,51 @@ def getimagepath(filename):
 
 @app.post("/pfpdeco/<filename>")
 def setimagepath(filename):
-    token = request.form.get("token")
-    if validate(token):
-        edit_user_param(token, "pfpdeco", filename)
-        return makejsonsuccess(str(filename))
+    data = request.get_json()
+    token = data.get("token")
+    userid = validate(token)
+    path = os.path.join(BASE_DIR, "uploads", "avatardecos", f"{filename}.png")
+    if os.path.exists(path):
+        userfries = searchparam(userid, "fries", False)
+        decorcost = 5
+
+        try:
+            if userfries >= decorcost:
+                edit_user_param(userid, "fries", userfries - decorcost)
+                if validate(token):
+                    edit_user_param(userid, "avatardeco", filename)
+                    return makejsonsuccess(str(filename))
+                else:
+                    return makejsonerror("Invalid Token"), 200
+            else:
+                return makejsonerror("Haha broke bitch"), 404
+        except Exception as e:
+            edit_user_param(userid, "fries", userfries)
+            logger.error(e)
+            return makejsonerror("Internal server error"), 500
     else:
-        return makejsonerror("Invalid Token")
+        return makejsonerror("Decor does not exist"), 404
+
+@app.post("/daily")
+def dailypath():
+    cooldown = 86400
+    try:
+        data = request.get_json()
+        token = data.get("token")
+        userid = validate(token)
+        timestamp = searchparam(userid, "dailytimestamp", True)
+        if time.time() - timestamp >= cooldown:
+            try:
+                fries = searchparam(userid, "fries", False)
+                edit_user_param(userid, "dailytimestamp", time.time())
+                edit_user_param(userid, "fries", fries + 10)
+                return makejsonsuccess(f"Daily claimed! {fries} -> {fries + 10}"), 200
+            except Exception as e:
+                return makejsonerror(str(e)), 400
+        else:
+            return makejsonerror(f"You must wait {math.floor(cooldown - (time.time() - timestamp))} seconds.")
+    except Exception as e:
+        return makejsonerror(str(e))
 
 portuse = 5613
 logger.info(f"Running on port {portuse}")

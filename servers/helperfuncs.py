@@ -39,7 +39,7 @@ def search(param):
     db.close()
     return data
 
-def register(uid, registername, registerpassword, usernum):
+def register(uid, registername, registerpassword):
     tokendb = TinyDB(os.path.join(BASE_DIR, "dbs", "userdata", "tokens.json"))
     token = secrets.token_hex(32)
     unix_time = int(time.time())
@@ -83,8 +83,7 @@ def save_to_file(data, filename):
     with open(path, "a", encoding="utf-8") as file:
         file.write(str(data) + "\n")
 
-def edit_user_param(token, field, value):
-    userid = validate(token)
+def edit_user_param(userid, field, value):
     db = TinyDB(os.path.join(BASE_DIR, "dbs", "userdata", "users.json"))
     
     if not userid:
@@ -101,6 +100,18 @@ def edit_user_param(token, field, value):
     db.update({field: value}, User.userid == userid)
     db.close()
     return True, "Updated successfully"
+
+def searchparam(userid, param, create):
+    midput = search(Query().userid == userid)
+    if not midput:
+        return
+
+    if param not in midput[0] and create:
+        edit_user_param(userid, param, 0)
+        return 0
+    
+    output = midput[0][param]
+    return output
 
 def usernametoid(username):
     User = Query()
