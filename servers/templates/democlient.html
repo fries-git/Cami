@@ -509,6 +509,25 @@ h2{
             </div>
 
             <div class="card">
+                <h2>Profile picture</h2>
+
+                <div class="profile-head" style="margin-bottom:14px">
+                    <img class="avatar" id="pfpPreview" alt="Your profile picture">
+
+                    <span class="muted">
+                        Square images work best — it'll be
+                        cropped to a square and resized to 128×128.
+                    </span>
+                </div>
+
+                <input type="file" id="pfpFile" accept="image/png,image/jpeg,image/webp">
+
+                <div class="actions">
+                    <button class="primary" onclick="uploadPfp()">Upload</button>
+                </div>
+            </div>
+
+            <div class="card">
                 <h2>Display name</h2>
 
                 <input id="displayName">
@@ -749,9 +768,19 @@ async function loadFeed(){
             .map(p=>`
                 <article class="card">
                     <div class="post-head">
-                        <span class="post-user">
-                            @${esc(p.username)}
-                        </span>
+                        <div style="display:flex;align-items:center;gap:10px">
+                            <img
+                                class="avatar"
+                                data-username="${esc(p.username)}"
+                                src="${avatarUrl(p.username)}"
+                                style="width:32px;height:32px"
+                                onerror="this.style.visibility='hidden'"
+                            >
+
+                            <span class="post-user">
+                                @${esc(p.username)}
+                            </span>
+                        </div>
 
                         <span class="post-time">
                             ${timeAgo(p.timestamp)}
@@ -808,7 +837,8 @@ async function loadUsers(){
                 <div class="user">
                     <img
                         class="avatar"
-                        src="${API}/userpfp/${encodeURIComponent(u)}"
+                        data-username="${esc(u)}"
+                        src="${avatarUrl(u)}"
                         onerror="this.style.visibility='hidden'"
                     >
 
@@ -923,12 +953,16 @@ async function loadProfile(){
         document.getElementById("newUsername").value=
             u.username || "";
 
+        document.getElementById("pfpPreview").src=
+            avatarUrl(u.username);
+
         document.getElementById("profileCard").innerHTML=`
             <div class="card">
                 <div class="profile-head">
                     <img
                         class="avatar"
-                        src="${API}/userpfp/${encodeURIComponent(u.username)}"
+                        data-username="${esc(u.username)}"
+                        src="${avatarUrl(u.username)}"
                     >
 
                     <div>
@@ -1123,6 +1157,80 @@ async function transfer(){
         toast(e.message);
     }
 }
+
+// Builds the avatar URL for a username. A cache-busting query
+// param is appended so that, right after a new picture is
+// uploaded, the browser re-fetches it instead of continuing to
+// show a cached copy of the old (or empty) image at the same URL.
+function avatarUrl(name){
+    return `${API}/userpfp/${encodeURIComponent(name)}?v=${Date.now()}`;
+}
+
+// Re-points every on-screen avatar <img> for the current user at
+// a fresh, cache-busted URL. Called after a successful upload so
+// the new picture shows up immediately without a full reload.
+function refreshAvatars(){
+    if(!username) return;
+
+    document
+        .querySelectorAll("img.avatar[data-username]")
+        .forEach(img=>{
+            if(img.dataset.username.toLowerCase() === username.toLowerCase()){
+                img.src = avatarUrl(username);
+            }
+        });
+
+    const preview=document.getElementById("pfpPreview");
+    if(preview){
+        preview.src = avatarUrl(username);
+    }
+}
+
+async function uploadPfp(){
+    const fileInput=document.getElementById("pfpFile");
+    const file=fileInput.files[0];
+
+    if(!file){
+        toast("Choose an image first.");
+        return;
+    }
+
+    if(!file.type.startsWith("image/")){
+        toast("Please choose an image file.");
+        return;
+    }
+
+    const form=new FormData();
+    form.append("token", token);
+    form.append("image", file, file.name);
+
+    try{
+        // Note: no Content-Type header is set here on purpose —
+        // the browser needs to set it itself (including the
+        // multipart boundary) for a FormData body. The json()
+        // helper always forces "application/json", so it can't
+        // be used for this request.
+        await api("/setpfp",{
+            method:"POST",
+            body:form
+        });
+
+        fileInput.value="";
+        toast("Profile picture updated");
+        refreshAvatars();
+
+    }catch(e){
+        toast(e.message);
+    }
+}
+
+document.getElementById("pfpFile").addEventListener("change",(e)=>{
+    const file=e.target.files[0];
+    if(file){
+        document.getElementById("pfpPreview").src=
+            URL.createObjectURL(file);
+    }
+});
 
 async function logout(){
     try{
