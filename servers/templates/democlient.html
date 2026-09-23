@@ -494,7 +494,7 @@ h2{
 
                 <div class="row">
                     <input id="recipient" placeholder="Username">
-                    <input id="amount" type="number" min="1" placeholder="Amount">
+                    <input id="amount" type="number" min="1" step="1" placeholder="Amount">
                 </div>
 
                 <div class="actions">
@@ -654,6 +654,9 @@ function toggleAuth(){
 
     document.querySelector(".authbox p button").textContent=
         authRegister ? "Log in" : "Register";
+
+    document.getElementById("authPass").autocomplete=
+        authRegister ? "new-password" : "current-password";
 }
 
 async function authSubmit(){
@@ -665,6 +668,16 @@ async function authSubmit(){
 
     if(!usernameInput || !password){
         toast("Enter a username and password.");
+        return;
+    }
+
+    // Mirrors the server's 4–32 character rule so bad input is
+    // caught immediately instead of round-tripping to the API.
+    if(
+        usernameInput.length < 4 || usernameInput.length > 32 ||
+        password.length < 4 || password.length > 32
+    ){
+        toast("Username and password must be 4–32 characters.");
         return;
     }
 
@@ -763,6 +776,12 @@ async function makePost(){
     const message=
         document.getElementById("postText").value;
 
+    // Mirrors the server's 10–200 character rule.
+    if(message.length < 10 || message.length > 200){
+        toast("Posts must be 10–200 characters.");
+        return;
+    }
+
     try{
         await json("/social",{
             token,
@@ -800,7 +819,7 @@ async function loadUsers(){
                     <button
                         class="secondary"
                         style="margin-left:auto"
-                        onclick="viewUser('${escAttr(u)}')"
+                        data-username="${esc(u)}"
                     >
                         View
                     </button>
@@ -814,6 +833,19 @@ async function loadUsers(){
         toast(e.message);
     }
 }
+
+// Delegated click handler for "View" buttons in the user list.
+// Using data-username + delegation (instead of inline
+// onclick="viewUser('...')") avoids ever concatenating a
+// user-supplied username into an inline JS string/HTML attribute,
+// which could otherwise be broken out of by a username containing
+// a quote character.
+document.getElementById("userList").addEventListener("click", (e)=>{
+    const btn = e.target.closest("button[data-username]");
+    if(btn){
+        viewUser(btn.dataset.username);
+    }
+});
 
 async function viewUser(name){
     try{
@@ -860,13 +892,18 @@ function closeModal(){
 }
 
 async function loadProfile(){
-    if(!me?.username){
+    // Use the live `username` (kept in sync with localStorage),
+    // not `me.username` — after a username change, `me` still
+    // holds the stale pre-change value until this function
+    // reassigns it below, which would otherwise query a
+    // username that no longer exists.
+    if(!username){
         return;
     }
 
     try{
         const u=await api(
-            "/user/"+encodeURIComponent(me.username)
+            "/user/"+encodeURIComponent(username)
         );
 
         me=u;
@@ -928,11 +965,18 @@ async function loadProfile(){
 }
 
 async function changeDisplay(){
+    const displayname=
+        document.getElementById("displayName").value.trim();
+
+    if(displayname.length < 4){
+        toast("Display name must be at least 4 characters.");
+        return;
+    }
+
     try{
         await json("/changedisplay",{
             token,
-            displayname:
-                document.getElementById("displayName").value
+            displayname
         });
 
         toast("Display name updated");
@@ -960,6 +1004,14 @@ async function changeBio(){
 }
 
 async function changeUsername(){
+    const newName=
+        document.getElementById("newUsername").value.trim();
+
+    if(newName.length < 4){
+        toast("Username must be at least 4 characters.");
+        return;
+    }
+
     try{
         await api(
             "/changename?token="+encodeURIComponent(token),
@@ -969,14 +1021,12 @@ async function changeUsername(){
                     "Content-Type":"application/json"
                 },
                 body:JSON.stringify({
-                    username:
-                        document.getElementById("newUsername").value
+                    username: newName
                 })
             }
         );
 
-        username=
-            document.getElementById("newUsername").value;
+        username=newName;
 
         localStorage.setItem("cami_username",username);
 
@@ -989,6 +1039,14 @@ async function changeUsername(){
 }
 
 async function changePassword(){
+    const oldpass=document.getElementById("oldPass").value;
+    const newpass=document.getElementById("newPass").value;
+
+    if(newpass.length < 4){
+        toast("New password must be at least 4 characters.");
+        return;
+    }
+
     try{
         await api(
             "/changepass?token="+encodeURIComponent(token),
@@ -998,11 +1056,8 @@ async function changePassword(){
                     "Content-Type":"application/json"
                 },
                 body:JSON.stringify({
-                    oldpass:
-                        document.getElementById("oldPass").value,
-
-                    newpass:
-                        document.getElementById("newPass").value
+                    oldpass,
+                    newpass
                 })
             }
         );
@@ -1030,14 +1085,31 @@ async function daily(){
 }
 
 async function transfer(){
-    try{
-        const count=
-            Number(document.getElementById("amount").value);
+    const recipient=
+        document.getElementById("recipient").value.trim();
 
+    const count=
+        Number(document.getElementById("amount").value);
+
+    if(!recipient){
+        toast("Enter a recipient username.");
+        return;
+    }
+
+    if(!Number.isInteger(count) || count <= 0){
+        toast("Enter a whole number of fries greater than 0.");
+        return;
+    }
+
+    if(recipient.toLowerCase() === (username || "").toLowerCase()){
+        toast("You can't transfer fries to yourself.");
+        return;
+    }
+
+    try{
         await json("/transferfries",{
             token,
-            recipientname:
-                document.getElementById("recipient").value,
+            recipientname: recipient,
             count
         });
 
@@ -1135,12 +1207,6 @@ function esc(s){
             "'":"&#39;"
         }[c])
     );
-}
-
-function escAttr(s){
-    return String(s ?? "")
-        .replace(/\\/g,"\\\\")
-        .replace(/'/g,"\\'");
 }
 
 document
