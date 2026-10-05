@@ -1,0 +1,68 @@
+body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    background-image:
+        linear-gradient(to bottom, rgba(0, 0, 0, 0) 40%, rgba(15, 15, 15, 0.95) 100%),
+        url('sitebg.png');
+
+    background-repeat: no-repeat, repeat;
+    background-size: auto, 400px 400px;
+    background-position: center, top left;
+
+    color: #fff;
+    font-family: "Space Grotesk", sans-serif;
+    text-align: center;
+}
+
+h1 {
+    margin: 0 0 8px;
+    font-size: 48px;
+}
+
+h3 {
+    margin: 0 0 16px;
+    font-size: 22px;
+    font-weight: normal;
+}
+
+p {
+    margin: 0;
+    color: #aaa;
+}
+
+a {
+    color: #00aaff;
+}
+
+a:hover {
+    color: #ccc;
+}
+
+h1 {
+    margin: 0 0 8px;
+    font-size: 48px;
+}
+
+h3 {
+    margin: 0 0 16px;
+    font-size: 22px;
+    font-weight: normal;
+}
+
+p {
+    margin: 0;
+    color: #aaa;
+}
+
+a {
+    color: #00aaff;
+}
+
+a:hover {
+    color: #ccc;
+}

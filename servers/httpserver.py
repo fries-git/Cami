@@ -159,6 +159,22 @@ def homepath():
     db.close()
     return render_template("main.html", usercount=usercount), 200    
 
+@app.post("/validate")
+def validatepath():
+    try:
+        data = request.get_json()
+        token = data.get("token")
+        userid = str(validate(token))
+
+        if userid:
+            data = search(Query().userid == userid)[0]
+            data.pop("password", None)
+            return makejsonsuccess(data), 200
+        else:
+            return makejsonerror("Invalid Token"), 404
+    except:
+        return makejsonerror("Failure"), 400 
+
 @app.post("/social")
 def socialpostpath():
     data = request.get_json()
@@ -238,29 +254,34 @@ def transferfriespath():
     try:
         data = request.get_json()
 
-        token = data.get("token")
-        name = data.get("recipientname")
-        recipientid = usernametoid(name)
-        print(recipientid)
         count = data.get("count")
+        if count > 0:
+            token = data.get("token")
+            name = data.get("recipientname")
+            recipientid = usernametoid(name)
+            print(recipientid)
+            
+            userid = validate(token)
 
-        userid = validate(token)
+            searchresp1 = search(Query().userid == userid)[0]
+            userfries = searchresp1["fries"]
 
-        searchresp1 = search(Query().userid == userid)[0]
-        userfries = searchresp1["fries"]
+            searchresp2 = search(Query().userid == recipientid)[0]
+            recipfries = searchresp2["fries"]
+            try:
+                if userfries >= count:
+                    edit_user_param(recipientid, "fries", recipfries + count)
+                    edit_user_param(userid, "fries", userfries - count)
+                else:
+                    return makejsonerror (f"Not enough fries. You have {userfries} and need {count}.")
+            except Exception as e:
+                edit_user_param(recipientid, "fries", recipfries)
+                edit_user_param(userid, "fries", userfries)
+                logger.error(e)
+                return makejsonerror("Fries transfer error. Unknown error."), 500
+        else:
+            return makejsonerror("Must try to send more than 0 fries."), 400
 
-        searchresp2 = search(Query().userid == recipientid)[0]
-        recipfries = searchresp2["fries"]
-        try:
-            if userfries >= count:
-                edit_user_param(recipientid, "fries", recipfries + count)
-                edit_user_param(userid, "fries", userfries - count)
-        except Exception as e:
-            edit_user_param(recipientid, "fries", recipfries)
-            edit_user_param(userid, "fries", userfries)
-            logger.error(e)
-            return makejsonerror("Fries transfer error. Unknown error."), 500
-        
     except Exception as e:
         logger.error(e)
         return makejsonerror("Internal server error"), 500

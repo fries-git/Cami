@@ -3,16 +3,13 @@ import sys
 
 http = subprocess.Popen([sys.executable, "servers/httpserver.py"])
 file = subprocess.Popen([sys.executable, "servers/fileserver.py"])
-ws = subprocess.Popen([sys.executable, "servers/websocketserver.py"])
-#game = subprocess.Popen([sys.executable, "servers/fungicideserver.py"])
+#chat = subprocess.Popen([sys.executable, "servers/websocketserver.py"])
 
-try:
+try:    
     http.wait()
     file.wait()
-    ws.wait()
-    # game.wait()
+    #chat.wait()
 except KeyboardInterrupt:
     http.terminate()
     file.terminate()
-    ws.terminate()
-    # game.terminate()
+    #chat.terminate()
