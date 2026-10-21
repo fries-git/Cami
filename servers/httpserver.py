@@ -159,6 +159,10 @@ def homepath():
     db.close()
     return render_template("main.html", usercount=usercount), 200    
 
+@app.get("/chat")
+def chatclientpath():
+    return render_template("client.html"), 200    
+
 @app.post("/validate")
 def validatepath():
     try:
