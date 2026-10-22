@@ -41,6 +41,14 @@ button{cursor:pointer}
 .icon-btn{border:0;background:transparent;color:var(--muted);padding:6px 8px;border-radius:5px}
 .icon-btn:hover{background:#303030;color:var(--text)}
 
+.channels{flex:none}
+.online-label{padding:18px 14px 8px;color:var(--muted);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;flex:none}
+.online{flex:1 1 0;min-height:0;overflow-y:auto;padding:0 8px 8px;display:flex;flex-direction:column;gap:2px}
+.online-item{display:flex;align-items:center;gap:9px;padding:4px 6px;border-radius:6px;color:#c9c9c9;min-width:0}
+.online-item:hover{background:#262626}
+.online-item .oname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.typing{height:20px;font-size:12px;color:var(--muted);padding:0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
 /* Avatar with optional decoration overlay */
 .av{position:relative;width:var(--s,36px);height:var(--s,36px);flex:none}
 .av-in{position:absolute;inset:0;border-radius:50%;overflow:hidden;display:grid;place-items:center;font-weight:700;color:#fff;font-size:calc(var(--s,36px)*.4)}
@@ -139,6 +147,10 @@ button{cursor:pointer}
   .messages{padding:14px 12px}
   .composer-wrap{padding-left:12px;padding-right:12px}
   .hint{display:none}
+  .online-label{font-size:0;padding:12px 0 6px}
+  .online{padding:0 4px 8px}
+  .online-item{justify-content:center;padding:3px 0}
+  .online-item .oname{display:none}
 }
 </style>
 </head>
@@ -148,6 +160,8 @@ button{cursor:pointer}
     <div class="brand"><span class="brand-mark"></span>CAMI</div>
     <div class="section-label">Channels</div>
     <nav class="channels" id="channels"></nav>
+    <div class="online-label" id="onlineLabel">Online</div>
+    <div class="online" id="online"></div>
     <div class="sidebar-bottom">
       <div class="profile" id="profile" title="Account settings">
         <div id="profileAvatar"></div>
@@ -164,6 +178,7 @@ button{cursor:pointer}
     <section class="messages" id="messages" aria-live="polite"></section>
     <button class="jump" id="jump" type="button">New messages ↓</button>
     <div class="composer-wrap">
+      <div class="typing" id="typing" aria-live="polite"></div>
       <form class="composer" id="composer">
         <textarea id="messageInput" rows="1" maxlength="4000" placeholder="Sign in to send messages…" disabled></textarea>
         <button class="send" id="sendButton" type="submit" disabled aria-label="Send message">↑</button>
@@ -421,6 +436,7 @@ button{cursor:pointer}
     if (c === channel) renderChannel();
   }
   function onNewMessage(m) {
+    if (typers[m.channel] && m.username) { delete typers[m.channel][m.username]; renderTyping(); }
     if (!addToCache(m)) {
       if (m.channel && m.channel !== channel && !cache[m.channel]) { unread[m.channel] = (unread[m.channel] || 0) + 1; renderSidebar(); }
       return;
@@ -454,10 +470,46 @@ button{cursor:pointer}
     return true;
   }
 
+  /* ---------- online users + typing ---------- */
+  const online = new Map(); // userid -> username
+  function renderOnline() {
+    $("onlineLabel").textContent = online.size ? `Online — ${online.size}` : "Online";
+    const box = $("online"); box.replaceChildren();
+    [...online.values()].sort((a, b) => a.localeCompare(b)).forEach(name => {
+      const el = document.createElement("div"); el.className = "online-item"; el.title = name;
+      const n = document.createElement("span"); n.className = "oname"; n.textContent = name;
+      el.append(makeAvatar(name, 24), n);
+      getUser(name).then(u => { if (u && u.displayname) { n.textContent = u.displayname; el.title = `${u.displayname} (@${name})`; } });
+      box.append(el);
+    });
+  }
+  const isOnlineList = a => a.length > 0 && a.every(u => u && typeof u === "object" && "username" in u && !("body" in u) && !("channel" in u));
+  function onOnline(arr) {
+    online.clear();
+    arr.forEach(u => { if (u && u.username) online.set(u.userid || u.username, u.username); });
+    renderOnline();
+  }
+  function requestOnline() { if (ws && ws.readyState === WebSocket.OPEN && authed) ws.send(JSON.stringify({ cmd: "getonline" })); }
+
+  const typers = {}; // channel -> { username: expiresAt }
+  let lastTypingSent = 0;
+  function renderTyping() {
+    const now = Date.now(), t = typers[channel] || {};
+    const names = Object.keys(t).filter(n => t[n] > now);
+    $("typing").textContent = !names.length ? "" : names.length === 1 ? `${names[0]} is typing…` : names.length === 2 ? `${names[0]} and ${names[1]} are typing…` : "Several people are typing…";
+  }
+  function onTyping(d) {
+    if (!d.channel || d.username === username || (userid && d.userid === userid)) return;
+    (typers[d.channel] = typers[d.channel] || {})[d.username] = Date.now() + 4000;
+    if (d.channel === channel) renderTyping();
+  }
+  setInterval(renderTyping, 1000);
+  setInterval(requestOnline, 60000);
+
   function handle(raw) {
     const d = unwrap(raw);
     if (d == null) return;
-    if (Array.isArray(d)) return onHistory(d);
+    if (Array.isArray(d)) return isOnlineList(d) ? onOnline(d) : onHistory(d);
     if (d.motd) return;
     switch (d.cmd) {
       case "success":
@@ -465,7 +517,7 @@ button{cursor:pointer}
           authed = true; retry = 0;
           setStatus("Connected", "online"); renderProfile(true);
           try { localStorage.setItem("camiToken", token); localStorage.setItem("camiUser", username); } catch (_) {}
-          requestHistory(); resolveUserId();
+          requestHistory(); requestOnline(); resolveUserId();
         }
         return;
       case "error":
@@ -476,8 +528,13 @@ button{cursor:pointer}
       case "delete_message": pendingDelete.delete(midOf(d)); return onDelete(d);
       case "connect":
         if (!userid && d.username === username && d.id) { userid = d.id; renderChannelIfNeeded(); }
+        if (d.username) { online.set(d.id || d.username, d.username); renderOnline(); }
         return;
-      case "disconnect": return;
+      case "disconnect":
+        if (d.id || d.username) { online.delete(d.id || d.username); renderOnline(); }
+        requestOnline(); // another tab of the same user may still be connected
+        return;
+      case "typing": return onTyping(d);
     }
     if (Array.isArray(d.message)) return onHistory(d.message);
     if (d.body && d.channel) return onNewMessage(d);
@@ -551,6 +608,7 @@ button{cursor:pointer}
     const t = token;
     manualClose = true; clearTimeout(reconnectTimer);
     token = ""; username = ""; userid = ""; authed = false; users.clear();
+    online.clear(); renderOnline();
     try { localStorage.removeItem("camiToken"); localStorage.removeItem("camiUser"); } catch (_) {}
     if (ws) try { ws.close(); } catch (_) {}
     Object.keys(cache).forEach(k => delete cache[k]); Object.keys(unread).forEach(k => delete unread[k]);
@@ -686,7 +744,7 @@ button{cursor:pointer}
     channel = b.dataset.channel; unread[channel] = 0;
     $("channelTitle").textContent = "# " + channel;
     if (authed) input.placeholder = `Message #${channel}`;
-    renderSidebar(); renderChannel(); jump.classList.remove("show");
+    renderSidebar(); renderChannel(); renderTyping(); jump.classList.remove("show");
     requestHistory(); if (authed) input.focus();
   });
   $("composer").addEventListener("submit", e => {
@@ -696,7 +754,13 @@ button{cursor:pointer}
     if (send({ cmd: "new_message", channel, body })) { input.value = ""; autosize(); input.focus(); }
   });
   function autosize() { input.style.height = "34px"; input.style.height = Math.min(input.scrollHeight, 160) + "px"; }
-  input.addEventListener("input", autosize);
+  input.addEventListener("input", () => {
+    autosize();
+    const now = Date.now();
+    if (authed && input.value.trim() && now - lastTypingSent > 3000 && ws && ws.readyState === WebSocket.OPEN) {
+      lastTypingSent = now; ws.send(JSON.stringify({ cmd: "typing", channel }));
+    }
+  });
   input.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); $("composer").requestSubmit(); } });
   list.addEventListener("scroll", () => { if (atBottom()) jump.classList.remove("show"); });
   jump.addEventListener("click", scrollDown);
