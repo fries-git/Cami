@@ -2,6 +2,8 @@
 
 `Just so we're clear, these are AI-Generated right now, give me a day.`
 
+# NOTE THAT MANY COMMANDS RETURN `{"cmd":"success","msg":"..."}`
+
 ## Register
 POST /register `{"username":"<str>","password":"<str>"}`\
 On Success: Returns authentication token in body with code `200`.\

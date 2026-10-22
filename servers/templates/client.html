@@ -2,20 +2,28 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>CAMI Chat</title>
 <style>
 :root{color-scheme:dark;--bg:#151515;--panel:#1c1c1c;--panel2:#222;--line:#303030;--text:#f2f2f2;--muted:#929292;--accent:#ff8c42;--danger:#ff7777;--ok:#65c98c}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;height:100dvh}
+html,body{height:100%;margin:0;overflow:hidden;overscroll-behavior:none}
+body{background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
 button,input,textarea{font:inherit}
 button{cursor:pointer}
-.app{display:grid;grid-template-columns:220px minmax(0,1fr);height:100dvh;max-width:1500px;margin:auto}
-.sidebar{background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;min-width:0}
-.brand{height:62px;padding:0 20px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line);font-size:17px;font-weight:750;letter-spacing:.4px}
+
+/* Layout: the app is exactly one viewport tall. Only .messages scrolls. */
+.app{display:grid;grid-template-columns:220px minmax(0,1fr);grid-template-rows:minmax(0,1fr);height:100dvh;max-width:1500px;margin:auto;overflow:hidden}
+.sidebar{background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;min-width:0;min-height:0}
+.main{min-width:0;min-height:0;display:flex;flex-direction:column;position:relative}
+.topbar{flex:none}
+.messages{flex:1 1 0;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:18px clamp(14px,4vw,54px);display:flex;flex-direction:column}
+.composer-wrap{flex:none;padding:0 clamp(14px,4vw,54px) calc(14px + env(safe-area-inset-bottom))}
+
+.brand{height:62px;flex:none;padding:0 20px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line);font-size:17px;font-weight:750;letter-spacing:.4px}
 .brand-mark{width:10px;height:10px;background:var(--accent);border-radius:3px}
 .section-label{padding:22px 14px 8px;color:var(--muted);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px}
-.channels{padding:0 8px;display:grid;gap:3px}
+.channels{padding:0 8px;display:grid;gap:3px;overflow-y:auto;min-height:0}
 .channel{border:0;background:transparent;color:#b9b9b9;text-align:left;padding:9px 10px;border-radius:6px;display:flex;gap:9px;align-items:center;position:relative}
 .channel:hover{background:#292929;color:var(--text)}
 .channel.active{background:#34281f;color:#fff}
@@ -24,16 +32,21 @@ button{cursor:pointer}
 .channel.active .hash{color:var(--accent)}
 .badge{margin-left:auto;background:var(--accent);color:#21150d;font-size:11px;font-weight:700;min-width:18px;height:18px;border-radius:9px;display:none;align-items:center;justify-content:center;padding:0 5px}
 .channel.unread .badge{display:inline-flex}
-.sidebar-bottom{margin-top:auto;padding:12px;border-top:1px solid var(--line)}
-.profile{display:flex;align-items:center;gap:10px;min-width:0}
-.avatar{width:32px;height:32px;border-radius:50%;background:#393939;color:#fff;display:grid;place-items:center;font-weight:700;flex:none;overflow:hidden;position:relative}
-.avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.sidebar-bottom{margin-top:auto;flex:none;padding:12px;border-top:1px solid var(--line)}
+.profile{display:flex;align-items:center;gap:10px;min-width:0;cursor:pointer;border-radius:8px;padding:4px}
+.profile:hover{background:#262626}
 .profile-info{min-width:0;flex:1}
 .profile-name{font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .profile-state{font-size:12px;color:var(--muted)}
 .icon-btn{border:0;background:transparent;color:var(--muted);padding:6px 8px;border-radius:5px}
 .icon-btn:hover{background:#303030;color:var(--text)}
-.main{min-width:0;display:flex;flex-direction:column;position:relative}
+
+/* Avatar with optional decoration overlay */
+.av{position:relative;width:var(--s,36px);height:var(--s,36px);flex:none}
+.av-in{position:absolute;inset:0;border-radius:50%;overflow:hidden;display:grid;place-items:center;font-weight:700;color:#fff;font-size:calc(var(--s,36px)*.4)}
+.av-in img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.av-deco{position:absolute;left:-10%;top:-10%;width:120%;height:120%;object-fit:contain;pointer-events:none}
+
 .topbar{height:62px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 22px;gap:12px}
 .channel-title{font-weight:700;font-size:15px}
 .status{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:12px;white-space:nowrap}
@@ -41,24 +54,20 @@ button{cursor:pointer}
 .dot.online{background:var(--ok)}
 .dot.error{background:var(--danger)}
 .dot.pending{background:var(--accent)}
-.messages{flex:1;overflow-y:auto;padding:18px clamp(14px,4vw,54px);display:flex;flex-direction:column}
-.message{display:grid;grid-template-columns:36px minmax(0,1fr);gap:11px;align-items:start;margin-top:14px;padding:1px 0}
+
+.message{display:grid;grid-template-columns:36px minmax(0,1fr);gap:11px;align-items:start;margin-top:14px;padding:1px 0;position:relative}
 .message.cont{margin-top:1px}
-.message.cont .avatar,.message.cont .message-head{display:none}
+.message.cont .message-head{display:none}
 .message.cont .message-body{margin-top:0}
-.message .avatar{width:36px;height:36px;font-size:13px}
-.gutter-time{display:none;grid-column:1;font-size:10px;color:var(--muted);text-align:right;padding-top:3px}
-.message.cont .gutter-time{display:block}
-.message.cont:not(:hover) .gutter-time{visibility:hidden}
-.message.cont{grid-template-columns:36px minmax(0,1fr)}
-.message-head{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
+.gutter-time{font-size:10px;color:var(--muted);text-align:right;padding-top:3px;visibility:hidden}
+.message.cont:hover .gutter-time{visibility:visible}
+.message-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
 .username{font-weight:700}
+.handle{font-size:12px;color:var(--muted)}
 .timestamp{font-size:11px;color:var(--muted)}
 .message-body{white-space:pre-wrap;overflow-wrap:anywhere;margin-top:3px;color:#dedede}
 .message-body a{color:#ffad76}
 .message-body code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;background:#2b2b2b;padding:2px 5px;border-radius:4px;font-size:13px}
-.message.pending .message-body{opacity:.55}
-.message{position:relative}
 .message-actions{position:absolute;top:0;right:0;background:var(--bg);padding:0 8px;border-radius:4px;opacity:0}
 .message:hover .message-actions{opacity:1}
 .delete-btn{border:0;background:transparent;color:var(--muted);font-size:12px}
@@ -70,7 +79,7 @@ button{cursor:pointer}
 .empty strong{display:block;color:#d7d7d7;font-size:16px;margin-bottom:5px}
 .jump{position:absolute;left:50%;bottom:92px;transform:translateX(-50%);background:var(--accent);color:#21150d;border:0;border-radius:16px;padding:6px 14px;font-weight:700;font-size:12px;box-shadow:0 6px 20px #0006;display:none}
 .jump.show{display:block}
-.composer-wrap{padding:0 clamp(14px,4vw,54px) 18px}
+
 .composer{display:flex;align-items:flex-end;gap:10px;background:var(--panel2);border:1px solid #383838;border-radius:9px;padding:6px 8px 6px 14px}
 .composer:focus-within{border-color:#765036}
 .composer textarea{flex:1;min-width:0;background:transparent;border:0;outline:0;color:var(--text);padding:7px 0;resize:none;max-height:160px;line-height:1.45;height:34px}
@@ -78,24 +87,59 @@ button{cursor:pointer}
 .send:hover{background:#ffa064}
 .send:disabled{opacity:.45;cursor:not-allowed}
 .hint{font-size:11px;color:var(--muted);margin:7px 2px 0;display:flex;justify-content:space-between}
+
 .overlay{position:fixed;inset:0;background:#0009;display:none;align-items:center;justify-content:center;padding:20px;z-index:10}
 .overlay.open{display:flex}
-.dialog{width:min(420px,100%);background:#202020;border:1px solid #383838;border-radius:12px;padding:22px;box-shadow:0 20px 70px #0008}
+.dialog{width:min(420px,100%);max-height:calc(100dvh - 40px);overflow-y:auto;background:#202020;border:1px solid #383838;border-radius:12px;padding:22px;box-shadow:0 20px 70px #0008}
 .dialog h2{font-size:18px;margin:0 0 6px}
 .dialog p{color:var(--muted);font-size:13px;margin:0 0 18px}
 .dialog label{display:block;font-size:12px;color:#bcbcbc;margin:13px 0 6px}
-.dialog input{width:100%;background:#151515;border:1px solid #383838;border-radius:6px;padding:11px;color:var(--text);outline:0}
-.dialog input:focus{border-color:var(--accent)}
+.dialog input[type=text],.dialog input[type=password],.dialog input:not([type]),.dialog textarea{width:100%;background:#151515;border:1px solid #383838;border-radius:6px;padding:10px;color:var(--text);outline:0}
+.dialog textarea{resize:vertical;min-height:70px}
+.dialog input:focus,.dialog textarea:focus{border-color:var(--accent)}
 .dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
 .auth-error{color:var(--danger);font-size:12px;margin-top:10px;min-height:16px}
 .auth-switch{margin-top:14px;text-align:center;font-size:12px;color:var(--muted)}
 .link{border:0;background:none;color:#ffad76;font-size:12px;padding:0}
-.btn{border:1px solid #414141;background:#292929;color:var(--text);padding:9px 13px;border-radius:6px}
+.btn{border:1px solid #414141;background:#292929;color:var(--text);padding:9px 13px;border-radius:6px;white-space:nowrap}
+.btn:hover{background:#323232}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:#24160d;font-weight:700}
+.btn.danger{color:var(--danger)}
 .btn:disabled{opacity:.6;cursor:wait}
+.dlg-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.dlg-head h2{margin:0}
+.sec{border-top:1px solid var(--line);margin-top:16px;padding-top:2px}
+.sec.first{border-top:0;margin-top:8px}
+.row{display:flex;gap:8px;align-items:stretch}
+.row input{flex:1;min-width:0}
+.note{font-size:12px;min-height:16px;margin-top:6px;color:var(--muted)}
+.note.ok{color:var(--ok)}
+.note.err{color:var(--danger)}
+.pfp-row{display:flex;gap:16px;align-items:center}
+.pfp-row .grow{flex:1;min-width:0}
+.pfp-row input[type=file]{width:100%;font-size:12px;color:var(--muted);margin-bottom:8px}
 .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#292929;border:1px solid #444;border-radius:8px;padding:10px 14px;color:var(--text);display:none;max-width:min(90vw,500px);box-shadow:0 8px 30px #0005;z-index:20}
 .toast.show{display:block}
-@media(max-width:620px){.app{grid-template-columns:64px minmax(0,1fr)}.brand{padding:0;justify-content:center;font-size:0}.brand-mark{width:13px;height:13px}.section-label{font-size:0;padding:18px 0 8px}.channels{padding:0 7px}.channel{justify-content:center;padding:10px 0;font-size:0}.hash{font-size:19px}.badge{position:absolute;top:2px;right:2px;min-width:8px;height:8px;padding:0;font-size:0}.sidebar-bottom{padding:10px 7px}.profile{justify-content:center}.profile-info,#authButton{display:none}.topbar{padding:0 14px}.status span:last-child{display:none}.messages{padding:14px 12px}.composer-wrap{padding:0 12px 12px}.hint{display:none}}
+
+@media(max-width:620px){
+  .app{grid-template-columns:64px minmax(0,1fr)}
+  .brand{padding:0;justify-content:center;font-size:0}
+  .brand-mark{width:13px;height:13px}
+  .section-label{font-size:0;padding:18px 0 8px}
+  .channels{padding:0 7px}
+  .channel{justify-content:center;padding:10px 0;font-size:0}
+  .channel .hash{font-size:19px}
+  .channel .cname{display:none}
+  .badge{position:absolute;top:2px;right:2px;min-width:8px;height:8px;padding:0;font-size:0}
+  .sidebar-bottom{padding:10px 4px}
+  .profile{justify-content:center;padding:4px 0}
+  .profile-info,#authButton{display:none}
+  .topbar{padding:0 14px}
+  .status span:last-child{display:none}
+  .messages{padding:14px 12px}
+  .composer-wrap{padding-left:12px;padding-right:12px}
+  .hint{display:none}
+}
 </style>
 </head>
 <body>
@@ -105,10 +149,10 @@ button{cursor:pointer}
     <div class="section-label">Channels</div>
     <nav class="channels" id="channels"></nav>
     <div class="sidebar-bottom">
-      <div class="profile">
-        <div class="avatar" id="profileAvatar">?</div>
+      <div class="profile" id="profile" title="Account settings">
+        <div id="profileAvatar"></div>
         <div class="profile-info"><div class="profile-name" id="profileName">Not signed in</div><div class="profile-state" id="profileState">Offline</div></div>
-        <button class="icon-btn" id="authButton" title="Sign in / out">⚙</button>
+        <button class="icon-btn" id="authButton" title="Account settings" type="button">⚙</button>
       </div>
     </div>
   </aside>
@@ -118,7 +162,7 @@ button{cursor:pointer}
       <div class="status"><span class="dot" id="statusDot"></span><span id="statusText">Disconnected</span></div>
     </header>
     <section class="messages" id="messages" aria-live="polite"></section>
-    <button class="jump" id="jump">New messages ↓</button>
+    <button class="jump" id="jump" type="button">New messages ↓</button>
     <div class="composer-wrap">
       <form class="composer" id="composer">
         <textarea id="messageInput" rows="1" maxlength="4000" placeholder="Sign in to send messages…" disabled></textarea>
@@ -129,6 +173,7 @@ button{cursor:pointer}
   </main>
 </div>
 
+<!-- Login / register -->
 <div class="overlay" id="authOverlay">
   <form class="dialog" id="authForm">
     <h2 id="authTitle">Log in to CAMI</h2>
@@ -142,6 +187,58 @@ button{cursor:pointer}
     <div class="auth-switch"><span id="switchText">New here?</span> <button type="button" class="link" id="switchMode">Create an account</button></div>
   </form>
 </div>
+
+<!-- Account settings -->
+<div class="overlay" id="settingsOverlay">
+  <div class="dialog" role="dialog" aria-label="Account settings">
+    <div class="dlg-head"><h2>Account</h2><button class="icon-btn" id="closeSettings" type="button" aria-label="Close">✕</button></div>
+
+    <div class="sec first">
+      <div class="pfp-row">
+        <div id="prevAv"></div>
+        <div class="grow">
+          <input type="file" id="pfpFile" accept="image/*">
+          <button class="btn" id="pfpSave" type="button">Upload picture</button>
+        </div>
+      </div>
+      <div class="note" id="pfpNote"></div>
+    </div>
+
+    <div class="sec">
+      <label for="decoInput">Avatar decoration (filename)</label>
+      <div class="row"><input id="decoInput" placeholder="e.g. sparkles.png" autocomplete="off"><button class="btn" id="decoSave" type="button">Apply</button></div>
+      <div class="note" id="decoNote"></div>
+    </div>
+
+    <div class="sec">
+      <label for="dispInput">Display name</label>
+      <div class="row"><input id="dispInput" maxlength="32" autocomplete="off"><button class="btn" id="dispSave" type="button">Save</button></div>
+      <div class="note" id="dispNote"></div>
+    </div>
+
+    <div class="sec">
+      <label for="bioInput">Bio</label>
+      <textarea id="bioInput" maxlength="200"></textarea>
+      <div class="row" style="justify-content:flex-end;margin-top:8px"><button class="btn" id="bioSave" type="button">Save bio</button></div>
+      <div class="note" id="bioNote"></div>
+    </div>
+
+    <div class="sec">
+      <label for="nameInput">Username</label>
+      <div class="row"><input id="nameInput" maxlength="32" autocomplete="off"><button class="btn" id="nameSave" type="button">Change</button></div>
+      <div class="note" id="nameNote"></div>
+    </div>
+
+    <div class="sec">
+      <label for="oldPass">Change password</label>
+      <input id="oldPass" type="password" placeholder="Current password" autocomplete="current-password">
+      <div class="row" style="margin-top:8px"><input id="newPass" type="password" placeholder="New password" autocomplete="new-password"><button class="btn" id="passSave" type="button">Change</button></div>
+      <div class="note" id="passNote"></div>
+    </div>
+
+    <div class="sec"><div class="dialog-actions" style="margin-top:14px"><button class="btn danger" id="logoutBtn" type="button">Log out</button></div></div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -149,49 +246,34 @@ button{cursor:pointer}
   const WS_URL = "wss://chat.barfpile.dev";
   const API = "https://cami.barfpile.dev";
   const CHANNELS = ["general", "coding", "off-topic", "shitpost"];
-  const GROUP_WINDOW = 5 * 60; // seconds
+  const GROUP_WINDOW = 5 * 60;
 
   let ws = null, token = "", username = "", userid = "", channel = "general";
   let authed = false, reconnectTimer = null, retry = 0, manualClose = false, toastTimer = null, authMode = "login";
-  const cache = {};      // channel -> [message]
-  const unread = {};     // channel -> count
-  let last = null;       // last rendered message (for grouping)
-  let lastDay = "";
+  const cache = {}, unread = {};
+  let last = null, lastDay = "";
 
   const $ = id => document.getElementById(id);
   const list = $("messages"), input = $("messageInput"), sendBtn = $("sendButton"), jump = $("jump");
+  const str = v => v == null ? "" : String(v);
 
   /* ---------- helpers ---------- */
-  const str = v => v == null ? "" : String(v);
   function toast(msg) {
     const t = $("toast"); t.textContent = msg; t.classList.add("show");
     clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 3200);
   }
   function setStatus(text, kind = "") { $("statusText").textContent = text; $("statusDot").className = "dot" + (kind ? " " + kind : ""); }
   function hue(name) { let h = 0; for (const c of name) h = (h * 31 + c.charCodeAt(0)) % 360; return h; }
-  function makeAvatar(name, cls) {
-    const a = document.createElement("div");
-    a.className = "avatar" + (cls ? " " + cls : "");
-    a.style.background = `hsl(${hue(name)} 35% 32%)`;
-    a.textContent = (name[0] || "?").toUpperCase();
-    if (name && name !== "Unknown") {
-      const img = new Image();
-      img.alt = ""; img.loading = "lazy";
-      img.onload = () => a.appendChild(img);
-      img.src = `${API}/userpfp/${encodeURIComponent(name)}`;
-    }
-    return a;
-  }
   const dayKey = ts => new Date(ts * 1000).toDateString();
   function dayLabel(ts) {
-    const d = new Date(ts * 1000), now = new Date();
-    const y = new Date(); y.setDate(now.getDate() - 1);
+    const d = new Date(ts * 1000), now = new Date(), y = new Date(); y.setDate(now.getDate() - 1);
     if (d.toDateString() === now.toDateString()) return "Today";
     if (d.toDateString() === y.toDateString()) return "Yesterday";
     return d.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric", year: d.getFullYear() === now.getFullYear() ? undefined : "numeric" });
   }
   const clock = ts => new Date(ts * 1000).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-  function msgKey(m) { return `${str(m.id || m.msgid)}|${m.timestamp}|${m.userid}|${m.body}`; }
+  const msgKey = m => `${str(m.id || m.msgid)}|${m.timestamp}|${m.userid}|${m.body}`;
+  const midOf = m => str(m.id || m.msgid);
 
   // Unwrap {"cmd":"success","message":{...}} envelopes (any depth).
   function unwrap(d) {
@@ -199,8 +281,38 @@ button{cursor:pointer}
     return d;
   }
 
+  /* ---------- user info + avatars ---------- */
+  const users = new Map(); // name -> Promise<userObject|null>
+  const pfpV = {};         // name -> cache-buster
+  const pfpUrl = n => `${API}/userpfp/${encodeURIComponent(n)}${pfpV[n] ? "?v=" + pfpV[n] : ""}`;
+  const decoUrl = f => `${API}/pfpdeco/${encodeURIComponent(f)}`;
+  function getUser(name) {
+    if (!users.has(name)) {
+      users.set(name, fetch(`${API}/user/${encodeURIComponent(name)}`)
+        .then(r => r.ok ? r.json() : null)
+        .then(d => { d = unwrap(d); if (d && d.message && typeof d.message === "object") d = d.message; return d && d.username ? d : null; })
+        .catch(() => null));
+    }
+    return users.get(name);
+  }
+  function makeAvatar(name, size, opts = {}) {
+    const a = document.createElement("div"); a.className = "av"; a.style.setProperty("--s", size + "px");
+    const inn = document.createElement("div"); inn.className = "av-in";
+    inn.style.background = `hsl(${hue(name)} 35% 32%)`;
+    inn.textContent = (name[0] || "?").toUpperCase();
+    a.appendChild(inn);
+    if (name && name !== "Unknown") {
+      const img = new Image(); img.alt = ""; img.onload = () => inn.appendChild(img);
+      img.src = opts.pfp || pfpUrl(name);
+      const addDeco = f => { if (!f) return; const d = new Image(); d.className = "av-deco"; d.alt = ""; d.onload = () => a.appendChild(d); d.src = decoUrl(f); };
+      if (opts.deco !== undefined) addDeco(opts.deco);
+      else getUser(name).then(u => u && addDeco(u.avatardeco));
+    }
+    return a;
+  }
+
   /* ---------- rendering ---------- */
-  function atBottom() { return list.scrollHeight - list.scrollTop - list.clientHeight < 80; }
+  const atBottom = () => list.scrollHeight - list.scrollTop - list.clientHeight < 80;
   function scrollDown() { list.scrollTop = list.scrollHeight; jump.classList.remove("show"); }
 
   function linkify(text, parent) {
@@ -208,13 +320,8 @@ button{cursor:pointer}
     let i = 0, m;
     while ((m = re.exec(text))) {
       if (m.index > i) parent.append(text.slice(i, m.index));
-      if (m[1]) {
-        const a = document.createElement("a");
-        a.href = m[1]; a.textContent = m[1]; a.target = "_blank"; a.rel = "noopener noreferrer nofollow";
-        parent.append(a);
-      } else {
-        const c = document.createElement("code"); c.textContent = m[2]; parent.append(c);
-      }
+      if (m[1]) { const a = document.createElement("a"); a.href = m[1]; a.textContent = m[1]; a.target = "_blank"; a.rel = "noopener noreferrer nofollow"; parent.append(a); }
+      else { const c = document.createElement("code"); c.textContent = m[2]; parent.append(c); }
       i = re.lastIndex;
     }
     if (i < text.length) parent.append(text.slice(i));
@@ -225,7 +332,7 @@ button{cursor:pointer}
     list.querySelector(".system-message.loading")?.remove();
     const ts = Number(m.timestamp) || 0;
     const name = str(m.username) || "Unknown";
-    const id = str(m.id || m.msgid);
+    const id = midOf(m);
 
     if (ts && dayKey(ts) !== lastDay) {
       const d = document.createElement("div"); d.className = "day"; d.textContent = dayLabel(ts);
@@ -237,15 +344,25 @@ button{cursor:pointer}
     row.className = "message" + (cont ? " cont" : "");
     if (id) row.dataset.msgid = id;
 
-    const gutter = document.createElement("div"); gutter.className = "gutter-time"; gutter.textContent = ts ? clock(ts) : "";
-    const avatar = makeAvatar(name);
-    const content = document.createElement("div");
-    content.style.gridColumn = "2";
+    const content = document.createElement("div"); content.style.gridColumn = "2";
     const head = document.createElement("div"); head.className = "message-head";
     const nameEl = document.createElement("span"); nameEl.className = "username"; nameEl.textContent = name;
     nameEl.style.color = `hsl(${hue(name)} 65% 72%)`;
+    const handle = document.createElement("span"); handle.className = "handle";
     const timeEl = document.createElement("time"); timeEl.className = "timestamp"; timeEl.textContent = ts ? clock(ts) : "";
-    head.append(nameEl, timeEl);
+    head.append(nameEl, handle, timeEl);
+    if (!cont) getUser(name).then(u => {
+      if (u && u.displayname && u.displayname !== name) { nameEl.textContent = u.displayname; handle.textContent = "@" + name; }
+    });
+
+    const body = document.createElement("div"); body.className = "message-body";
+    linkify(str(m.body), body);
+    content.append(head, body);
+
+    if (cont) {
+      const g = document.createElement("div"); g.className = "gutter-time"; g.textContent = ts ? clock(ts) : "";
+      row.append(g, content);
+    } else row.append(makeAvatar(name, 36), content);
 
     if (id && userid && m.userid === userid) {
       const del = document.createElement("button");
@@ -253,11 +370,6 @@ button{cursor:pointer}
       del.addEventListener("click", () => deleteMessage(id));
       row.appendChild(del);
     }
-    const body = document.createElement("div"); body.className = "message-body";
-    linkify(str(m.body), body);
-    content.append(head, body);
-
-    if (cont) { row.append(gutter, content); } else { row.append(avatar, content); }
     list.appendChild(row);
     last = { name, ts };
   }
@@ -265,19 +377,18 @@ button{cursor:pointer}
   function renderChannel() {
     list.replaceChildren(); last = null; lastDay = "";
     const msgs = cache[channel];
-    if (!msgs) { const s = document.createElement("div"); s.className = "system-message loading"; s.textContent = "Loading messages…"; list.appendChild(s); return; }
-    if (!msgs.length) {
-      list.innerHTML = '<div class="empty"><strong>Nothing here yet</strong>Start the conversation.</div>'; return;
-    }
+    if (!msgs) { const s = document.createElement("div"); s.className = "system-message loading"; s.textContent = authed ? "Loading messages…" : ""; list.appendChild(s); return; }
+    if (!msgs.length) { list.innerHTML = '<div class="empty"><strong>Nothing here yet</strong>Start the conversation.</div>'; return; }
     msgs.forEach(appendMessage);
     scrollDown();
   }
+  function renderChannelIfNeeded() { if (cache[channel]) { const keep = atBottom(); renderChannel(); if (!keep) jump.classList.add("show"); } }
 
   function renderSidebar() {
     $("channels").replaceChildren(...CHANNELS.map(c => {
       const b = document.createElement("button");
       b.className = "channel" + (c === channel ? " active" : "") + (unread[c] ? " unread" : "");
-      b.dataset.channel = c;
+      b.dataset.channel = c; b.type = "button";
       b.innerHTML = '<span class="hash">#</span><span class="cname"></span><span class="badge"></span>';
       b.querySelector(".cname").textContent = c;
       b.querySelector(".badge").textContent = unread[c] > 99 ? "99+" : (unread[c] || "");
@@ -288,24 +399,20 @@ button{cursor:pointer}
   function renderProfile(connected) {
     input.disabled = !connected; sendBtn.disabled = !connected;
     input.placeholder = connected ? `Message #${channel}` : "Sign in to send messages…";
-    const av = $("profileAvatar");
-    av.replaceChildren(); av.textContent = username ? username[0].toUpperCase() : "?";
-    if (username) { av.style.background = `hsl(${hue(username)} 35% 32%)`; const i = new Image(); i.onload = () => av.appendChild(i); i.src = `${API}/userpfp/${encodeURIComponent(username)}`; }
+    $("profileAvatar").replaceChildren(makeAvatar(username || "?", 32));
     $("profileName").textContent = username || "Not signed in";
     $("profileState").textContent = connected ? "Connected" : (token ? "Reconnecting…" : "Offline");
+    if (username) { const n = username; getUser(n).then(u => { if (u && u.displayname && n === username) $("profileName").textContent = u.displayname; }); }
   }
 
   /* ---------- incoming ---------- */
   function addToCache(m) {
     const c = m.channel;
-    if (!c || !CHANNELS.includes(c)) return false;
-    if (!cache[c]) return false; // history not loaded yet; it will arrive with the history
+    if (!c || !CHANNELS.includes(c) || !cache[c]) return false;
     const k = msgKey(m);
     if (cache[c].some(x => msgKey(x) === k)) return false;
-    cache[c].push(m);
-    return true;
+    cache[c].push(m); return true;
   }
-
   function onHistory(arr) {
     const c = arr.length ? arr[0].channel : channel;
     if (!CHANNELS.includes(c)) return;
@@ -313,48 +420,37 @@ button{cursor:pointer}
     cache[c] = arr.filter(m => m && typeof m === "object" && m.cmd !== "delete_message" && !seen.has(msgKey(m)) && seen.add(msgKey(m)));
     if (c === channel) renderChannel();
   }
-
   function onNewMessage(m) {
     if (!addToCache(m)) {
-      // channel not loaded yet: just flag it
-      if (m.channel && m.channel !== channel) { unread[m.channel] = (unread[m.channel] || 0) + 1; renderSidebar(); }
+      if (m.channel && m.channel !== channel && !cache[m.channel]) { unread[m.channel] = (unread[m.channel] || 0) + 1; renderSidebar(); }
       return;
     }
     if (m.channel === channel) {
       const stick = atBottom() || (userid && m.userid === userid);
       appendMessage(m);
       if (stick) scrollDown(); else jump.classList.add("show");
-    } else {
-      unread[m.channel] = (unread[m.channel] || 0) + 1; renderSidebar();
-    }
+    } else { unread[m.channel] = (unread[m.channel] || 0) + 1; renderSidebar(); }
   }
-
   function onDelete(m) {
-    const id = str(m.id || m.msgid);
-    if (!id) return;
+    const id = midOf(m); if (!id) return;
     const c = m.channel || channel;
-    if (cache[c]) cache[c] = cache[c].filter(x => str(x.id || x.msgid) !== id);
-    if (c === channel) { const keep = atBottom(); renderChannel(); if (!keep) jump.classList.add("show"); }
+    if (cache[c]) cache[c] = cache[c].filter(x => midOf(x) !== id);
+    if (c === channel) renderChannelIfNeeded();
   }
 
-  // Optimistic delete: remove locally, restore if the server reports an error.
   const pendingDelete = new Map();
   function deleteMessage(id) {
-    const m = (cache[channel] || []).find(x => str(x.id || x.msgid) === id);
+    const m = (cache[channel] || []).find(x => midOf(x) === id);
     if (!m || !send({ cmd: "delete_message", channel, msgid: id })) return;
-    pendingDelete.set(id, m);
-    setTimeout(() => pendingDelete.delete(id), 5000);
+    pendingDelete.set(id, m); setTimeout(() => pendingDelete.delete(id), 5000);
     onDelete({ id, channel });
   }
   function restorePending(reason) {
     if (!pendingDelete.size) return false;
-    for (const m of pendingDelete.values()) {
-      if (cache[m.channel] && !cache[m.channel].some(x => msgKey(x) === msgKey(m))) cache[m.channel].push(m);
-    }
+    for (const m of pendingDelete.values()) if (cache[m.channel] && !cache[m.channel].some(x => msgKey(x) === msgKey(m))) cache[m.channel].push(m);
     pendingDelete.clear();
     Object.values(cache).forEach(a => a.sort((x, y) => (x.timestamp || 0) - (y.timestamp || 0)));
-    renderChannelIfNeeded();
-    toast(reason || "Could not delete message.");
+    renderChannelIfNeeded(); toast(reason || "Could not delete message.");
     return true;
   }
 
@@ -373,11 +469,11 @@ button{cursor:pointer}
         }
         return;
       case "error":
-        if (!authed) { failAuth(str(d.message)); return; }
+        if (!authed) { failAuth(); return; }
         if (restorePending(str(d.message))) return;
         toast(str(d.message) || "Chat error"); return;
       case "new_message": return onNewMessage(d);
-      case "delete_message": pendingDelete.delete(str(d.id || d.msgid)); return onDelete(d);
+      case "delete_message": pendingDelete.delete(midOf(d)); return onDelete(d);
       case "connect":
         if (!userid && d.username === username && d.id) { userid = d.id; renderChannelIfNeeded(); }
         return;
@@ -386,7 +482,6 @@ button{cursor:pointer}
     if (Array.isArray(d.message)) return onHistory(d.message);
     if (d.body && d.channel) return onNewMessage(d);
   }
-  function renderChannelIfNeeded() { if (cache[channel]) { const keep = atBottom(); renderChannel(); if (!keep) jump.classList.add("show"); } }
 
   /* ---------- network ---------- */
   function send(obj) {
@@ -394,19 +489,13 @@ button{cursor:pointer}
     toast("Not connected."); return false;
   }
   function requestHistory(c = channel) { if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ cmd: "gethistory", channel: c, length: 100 })); }
-
   async function resolveUserId() {
     if (userid || !username) return;
-    try {
-      const r = await fetch(`${API}/user/${encodeURIComponent(username)}`);
-      if (!r.ok) return;
-      let d = unwrap(await r.json());
-      if (d && d.message && typeof d.message === "object") d = d.message;
-      if (d && d.userid) { userid = d.userid; renderChannelIfNeeded(); }
-    } catch (_) {}
+    const u = await getUser(username);
+    if (u && u.userid) { userid = u.userid; renderChannelIfNeeded(); }
   }
 
-  function failAuth(reason) {
+  function failAuth() {
     manualClose = true; clearTimeout(reconnectTimer);
     token = ""; authed = false;
     try { localStorage.removeItem("camiToken"); } catch (_) {}
@@ -417,8 +506,7 @@ button{cursor:pointer}
 
   function connect() {
     if (!token) return openAuth();
-    manualClose = false; authed = false;
-    clearTimeout(reconnectTimer);
+    manualClose = false; authed = false; clearTimeout(reconnectTimer);
     if (ws) { const old = ws; ws = null; try { old.close(); } catch (_) {} }
     setStatus(retry ? "Reconnecting…" : "Connecting…", "pending");
     const sock = new WebSocket(WS_URL); ws = sock;
@@ -451,28 +539,136 @@ button{cursor:pointer}
       t = str(t).replace(/^"|"$/g, "").trim();
       if (!t) throw new Error("CAMI did not return a token.");
       username = name; userid = ""; token = t; retry = 0;
+      users.clear();
       $("authOverlay").classList.remove("open"); $("passwordInput").value = "";
       Object.keys(cache).forEach(k => delete cache[k]);
       renderChannel(); connect();
-    } catch (e) {
-      $("authError").textContent = e.message;
-    } finally { btn.disabled = false; }
+    } catch (e) { $("authError").textContent = e.message; }
+    finally { btn.disabled = false; }
   }
 
   async function logout() {
     const t = token;
     manualClose = true; clearTimeout(reconnectTimer);
-    token = ""; username = ""; userid = ""; authed = false;
+    token = ""; username = ""; userid = ""; authed = false; users.clear();
     try { localStorage.removeItem("camiToken"); localStorage.removeItem("camiUser"); } catch (_) {}
     if (ws) try { ws.close(); } catch (_) {}
     Object.keys(cache).forEach(k => delete cache[k]); Object.keys(unread).forEach(k => delete unread[k]);
     setStatus("Disconnected"); renderProfile(false); renderSidebar();
     list.innerHTML = '<div class="empty"><strong>Signed out</strong>Log in to keep chatting.</div>';
     fetch(`${API}/logout`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token: t }) }).catch(() => {});
+    $("settingsOverlay").classList.remove("open");
     openAuth();
   }
 
-  /* ---------- auth dialog ---------- */
+  /* ---------- account settings ---------- */
+  const note = (id, text, kind = "") => { const n = $(id); n.textContent = text; n.className = "note" + (kind ? " " + kind : ""); };
+  async function api(path, { json, form, query } = {}) {
+    const url = `${API}${path}${query ? "?" + new URLSearchParams(query) : ""}`;
+    const opts = { method: "POST" };
+    if (json) { opts.headers = { "Content-Type": "application/json" }; opts.body = JSON.stringify(json); }
+    if (form) opts.body = form;
+    const r = await fetch(url, opts);
+    return { ok: r.ok, status: r.status, text: (await r.text()).trim() };
+  }
+  const errText = (r, map = {}) => map[r.status] || (r.status === 401 ? "Session invalid. Log in again." : (r.text && r.text.length < 120 ? r.text : `Error ${r.status}`));
+
+  let pendingPfp = null; // object URL of chosen file
+  function renderPreview() {
+    const box = $("prevAv"); box.replaceChildren();
+    box.appendChild(makeAvatar(username || "?", 84, { pfp: pendingPfp || pfpUrl(username), deco: $("decoInput").value.trim() }));
+  }
+  async function openSettings() {
+    if (!token) return openAuth();
+    $("settingsOverlay").classList.add("open");
+    ["pfpNote", "decoNote", "dispNote", "bioNote", "nameNote", "passNote"].forEach(n => note(n, ""));
+    $("oldPass").value = ""; $("newPass").value = ""; $("pfpFile").value = ""; pendingPfp = null;
+    $("nameInput").value = username;
+    const u = await getUser(username);
+    $("dispInput").value = u ? (u.displayname || "") : "";
+    $("bioInput").value = u ? (u.bio || "") : "";
+    $("decoInput").value = u ? (u.avatardeco || "") : "";
+    renderPreview();
+  }
+  function refreshMe() {
+    users.delete(username); pfpV[username] = Date.now();
+    renderProfile(authed); renderChannelIfNeeded(); renderPreview();
+  }
+  async function guarded(btn, noteId, fn) {
+    btn.disabled = true; note(noteId, "Saving…");
+    try { await fn(); } catch (e) { note(noteId, "Network error.", "err"); }
+    finally { btn.disabled = false; }
+  }
+
+  $("pfpFile").addEventListener("change", () => {
+    if (pendingPfp) URL.revokeObjectURL(pendingPfp);
+    const f = $("pfpFile").files[0]; pendingPfp = f ? URL.createObjectURL(f) : null; renderPreview();
+  });
+  let decoTimer = null;
+  $("decoInput").addEventListener("input", () => { clearTimeout(decoTimer); decoTimer = setTimeout(renderPreview, 300); });
+
+  $("pfpSave").addEventListener("click", () => {
+    const f = $("pfpFile").files[0]; if (!f) return note("pfpNote", "Choose an image first.", "err");
+    guarded($("pfpSave"), "pfpNote", async () => {
+      const fd = new FormData(); fd.append("token", token); fd.append("image", f);
+      const r = await api("/setpfp", { form: fd });
+      if (!r.ok) return note("pfpNote", errText(r, { 400: "No image received." }), "err");
+      $("pfpFile").value = ""; pendingPfp = null; note("pfpNote", "Picture updated.", "ok"); refreshMe();
+    });
+  });
+  $("decoSave").addEventListener("click", () => {
+    const f = $("decoInput").value.trim(); if (!f) return note("decoNote", "Enter a decoration filename.", "err");
+    guarded($("decoSave"), "decoNote", async () => {
+      const fd = new FormData(); fd.append("token", token);
+      const r = await api(`/pfpdeco/${encodeURIComponent(f)}`, { form: fd });
+      if (!r.ok) return note("decoNote", errText(r, { 404: "That decoration doesn't exist." }), "err");
+      note("decoNote", "Decoration applied.", "ok"); refreshMe();
+    });
+  });
+  $("dispSave").addEventListener("click", () => {
+    const v = $("dispInput").value.trim(); if (v.length < 4) return note("dispNote", "Display name must be at least 4 characters.", "err");
+    guarded($("dispSave"), "dispNote", async () => {
+      const r = await api("/changedisplay", { json: { token, displayname: v } });
+      if (!r.ok) return note("dispNote", errText(r, { 403: "Display name must be at least 4 characters." }), "err");
+      note("dispNote", "Display name updated.", "ok"); refreshMe();
+    });
+  });
+  $("bioSave").addEventListener("click", () => {
+    const v = $("bioInput").value;
+    guarded($("bioSave"), "bioNote", async () => {
+      const r = await api("/updatebio", { json: { token, newbio: v } });
+      if (!r.ok) return note("bioNote", errText(r, { 422: "Bio must be 200 characters or fewer." }), "err");
+      note("bioNote", "Bio updated.", "ok"); refreshMe();
+    });
+  });
+  $("nameSave").addEventListener("click", () => {
+    const v = $("nameInput").value.trim();
+    if (v === username) return note("nameNote", "That's already your username.");
+    if (v.length < 4 || v.length > 32) return note("nameNote", "Username must be 4–32 characters.", "err");
+    guarded($("nameSave"), "nameNote", async () => {
+      const r = await api("/changename", { json: { username: v }, query: { token } });
+      if (!r.ok) return note("nameNote", errText(r, { 403: "Username must be 4–32 characters.", 409: "That username is taken." }), "err");
+      users.delete(username); username = v; userid = "";
+      try { localStorage.setItem("camiUser", v); } catch (_) {}
+      note("nameNote", "Username changed.", "ok");
+      refreshMe(); retry = 0; connect(); // reconnect so the server picks up the new name
+    });
+  });
+  $("passSave").addEventListener("click", () => {
+    const o = $("oldPass").value, n = $("newPass").value;
+    if (!o) return note("passNote", "Enter your current password.", "err");
+    if (n.length < 4) return note("passNote", "New password must be at least 4 characters.", "err");
+    guarded($("passSave"), "passNote", async () => {
+      const r = await api("/changepass", { json: { oldpass: o, newpass: n }, query: { token } });
+      if (!r.ok) return note("passNote", r.status === 403 ? "Current password is wrong, or new one is too short." : errText(r), "err");
+      $("oldPass").value = ""; $("newPass").value = ""; note("passNote", "Password updated.", "ok");
+    });
+  });
+  $("logoutBtn").addEventListener("click", logout);
+  $("closeSettings").addEventListener("click", () => $("settingsOverlay").classList.remove("open"));
+  $("settingsOverlay").addEventListener("mousedown", e => { if (e.target === $("settingsOverlay")) $("settingsOverlay").classList.remove("open"); });
+
+  /* ---------- login dialog ---------- */
   function setAuthMode(mode) {
     authMode = mode; $("authError").textContent = "";
     $("authTitle").textContent = mode === "register" ? "Create a CAMI account" : "Log in to CAMI";
@@ -482,38 +678,31 @@ button{cursor:pointer}
     $("switchMode").textContent = mode === "register" ? "Log in" : "Create an account";
     $("passwordInput").autocomplete = mode === "register" ? "new-password" : "current-password";
   }
-  function openAuth(error = "") {
-    setAuthMode("login"); $("authError").textContent = error;
-    $("authOverlay").classList.add("open"); $("usernameInput").focus();
-  }
+  function openAuth(error = "") { setAuthMode("login"); $("authError").textContent = error; $("authOverlay").classList.add("open"); $("usernameInput").focus(); }
 
   /* ---------- events ---------- */
   $("channels").addEventListener("click", e => {
     const b = e.target.closest("[data-channel]"); if (!b) return;
     channel = b.dataset.channel; unread[channel] = 0;
     $("channelTitle").textContent = "# " + channel;
-    input.placeholder = authed ? `Message #${channel}` : input.placeholder;
+    if (authed) input.placeholder = `Message #${channel}`;
     renderSidebar(); renderChannel(); jump.classList.remove("show");
     requestHistory(); if (authed) input.focus();
   });
-
   $("composer").addEventListener("submit", e => {
     e.preventDefault();
-    const body = input.value.trim();
-    if (!body) return;
+    const body = input.value.trim(); if (!body) return;
     if (body.length < 5) return toast("Messages must be at least 5 characters.");
     if (send({ cmd: "new_message", channel, body })) { input.value = ""; autosize(); input.focus(); }
   });
   function autosize() { input.style.height = "34px"; input.style.height = Math.min(input.scrollHeight, 160) + "px"; }
   input.addEventListener("input", autosize);
-  input.addEventListener("keydown", e => {
-    if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); $("composer").requestSubmit(); }
-  });
-
+  input.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); $("composer").requestSubmit(); } });
   list.addEventListener("scroll", () => { if (atBottom()) jump.classList.remove("show"); });
   jump.addEventListener("click", scrollDown);
 
-  $("authButton").addEventListener("click", () => { if (token) { if (confirm("Log out of CAMI?")) logout(); } else openAuth(); });
+  $("profile").addEventListener("click", openSettings);
+  $("authButton").addEventListener("click", e => { e.stopPropagation(); openSettings(); });
   $("switchMode").addEventListener("click", () => setAuthMode(authMode === "register" ? "login" : "register"));
   $("cancelAuth").addEventListener("click", () => $("authOverlay").classList.remove("open"));
   $("authForm").addEventListener("submit", e => {
@@ -523,7 +712,7 @@ button{cursor:pointer}
     if (pw.length < 4 || pw.length > 32) return void ($("authError").textContent = "Password must be 4–32 characters.");
     accountRequest(authMode, name, pw);
   });
-  document.addEventListener("keydown", e => { if (e.key === "Escape") $("authOverlay").classList.remove("open"); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") { $("authOverlay").classList.remove("open"); $("settingsOverlay").classList.remove("open"); } });
   window.addEventListener("beforeunload", () => { manualClose = true; clearTimeout(reconnectTimer); if (ws) ws.close(); });
   window.addEventListener("online", () => { if (token && !authed) { retry = 0; connect(); } });
 
@@ -531,7 +720,7 @@ button{cursor:pointer}
   renderSidebar(); renderProfile(false);
   list.innerHTML = '<div class="empty"><strong>Welcome to CAMI</strong>Sign in to start chatting.</div>';
   let saved = ""; try { saved = localStorage.getItem("camiToken") || ""; username = localStorage.getItem("camiUser") || ""; } catch (_) {}
-  if (saved) { token = saved; renderChannel(); connect(); } else openAuth();
+  if (saved) { token = saved; renderProfile(false); connect(); } else openAuth();
 })();
 </script>
 </body>
