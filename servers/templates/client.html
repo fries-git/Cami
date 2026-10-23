@@ -889,8 +889,13 @@ body{background:var(--bg);letter-spacing:.01em}
       url = str(url).replace(/^"|"$/g, "").trim();
       if (!/^https?:\/\//.test(url)) throw new Error("Upload server returned no URL.");
       url = normImg(url);
-      if (/\/gif\//.test(url)) url = url.replace(/\.png(\?.*)?$/i, ".gif$1"); // server stores gifs as .gif
-      const caption = input.value.trim();
+
+      if (/\/gif\//.test(url)) {
+        url = url.replace(/\.png(\?.*)?$/i, ".gif$1");
+      } else {
+        url = url.replace(/\.png(\?.*)?$/i, "$1");
+      }
+      const caption = input.value.trim();url = norm
       if (send({ cmd: "new_message", channel, body: caption ? `${caption}\n${url}` : url })) { input.value = ""; autosize(); }
     } catch (e) { toast(e.message || "Upload failed."); }
     finally { uploading = false; $("attachBtn").disabled = !authed; renderTyping(); }
