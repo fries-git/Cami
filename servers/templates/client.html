@@ -390,8 +390,13 @@ body{background:var(--bg);letter-spacing:.01em}
   const atBottom = () => list.scrollHeight - list.scrollTop - list.clientHeight < 80;
   let pinned = true; // true while the view is at the bottom (keeps position as images load)
   function scrollDown() { list.scrollTop = list.scrollHeight; pinned = true; jump.classList.remove("show"); }
+  // The upload server may still return links on the old host; always load images from the current one.
+  const IMG_HOSTS = [IMG_HOST, "images.barfpile.dev"];
+  function normImg(u) {
+    try { const x = new URL(u); if (IMG_HOSTS.includes(x.host)) x.host = IMG_HOST; return x.toString(); } catch (_) { return u; }
+  }
   function isHostedImage(u) {
-    try { const x = new URL(u); return x.host === IMG_HOST && (/^\/(image|gif)\//.test(x.pathname) || /\.(png|jpe?g|gif|webp)$/i.test(x.pathname)); } catch (_) { return false; }
+    try { const x = new URL(u); return IMG_HOSTS.includes(x.host) && (/^\/(image|gif)\//.test(x.pathname) || /\.(png|jpe?g|gif|webp)$/i.test(x.pathname)); } catch (_) { return false; }
   }
 
   function linkify(text, parent) {
@@ -400,11 +405,11 @@ body{background:var(--bg);letter-spacing:.01em}
     while ((m = re.exec(text))) {
       if (m.index > i) parent.append(text.slice(i, m.index));
       if (m[1] && isHostedImage(m[1])) {
-        const a = document.createElement("a"); a.href = m[1]; a.target = "_blank"; a.rel = "noopener noreferrer";
+        const src = normImg(m[1]); const a = document.createElement("a"); a.href = src; a.target = "_blank"; a.rel = "noopener noreferrer";
         const img = document.createElement("img"); img.className = "msg-img"; img.alt = "image"; img.loading = "lazy";
         img.onload = () => { if (pinned) list.scrollTop = list.scrollHeight; };
         img.onerror = () => { a.replaceChildren(m[1]); };
-        img.src = m[1]; a.append(img); parent.append(a);
+        img.src = src; a.append(img); parent.append(a);
       } else if (m[1]) { const a = document.createElement("a"); a.href = m[1]; a.textContent = m[1]; a.target = "_blank"; a.rel = "noopener noreferrer nofollow"; parent.append(a); }
       else { const c = document.createElement("code"); c.textContent = m[2]; parent.append(c); }
       i = re.lastIndex;
@@ -449,7 +454,7 @@ body{background:var(--bg);letter-spacing:.01em}
       row.append(g, content);
     } else row.append(makeAvatar(name, 36), content);
 
-    if (id && userid && m.userid === userid) {
+    if (id && authed) {
       const del = document.createElement("button");
       del.className = "delete-btn message-actions"; del.type = "button"; del.textContent = "Delete";
       del.addEventListener("click", () => deleteMessage(id));
@@ -528,8 +533,13 @@ body{background:var(--bg);letter-spacing:.01em}
   function deleteMessage(id) {
     const m = (cache[channel] || []).find(x => midOf(x) === id);
     if (!m || !send({ cmd: "delete_message", channel, msgid: id })) return;
-    pendingDelete.set(id, m); setTimeout(() => pendingDelete.delete(id), 5000);
-    onDelete({ id, channel });
+    lastSent = null;
+    // Own messages vanish instantly (and come back if the server refuses); for anyone else's,
+    // wait for the server to decide and just show its error if it says no.
+    if (userid && m.userid === userid) {
+      pendingDelete.set(id, m); setTimeout(() => pendingDelete.delete(id), 5000);
+      onDelete({ id, channel });
+    }
   }
   function restorePending(reason) {
     if (!pendingDelete.size) return false;
@@ -878,6 +888,7 @@ body{background:var(--bg);letter-spacing:.01em}
       let url = parsed == null ? raw : (typeof parsed === "string" ? parsed : (parsed.message || parsed.url || ""));
       url = str(url).replace(/^"|"$/g, "").trim();
       if (!/^https?:\/\//.test(url)) throw new Error("Upload server returned no URL.");
+      url = normImg(url);
       if (/\/gif\//.test(url)) url = url.replace(/\.png(\?.*)?$/i, ".gif$1"); // server stores gifs as .gif
       const caption = input.value.trim();
       if (send({ cmd: "new_message", channel, body: caption ? `${caption}\n${url}` : url })) { input.value = ""; autosize(); }
