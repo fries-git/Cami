@@ -396,7 +396,7 @@ body{background:var(--bg);letter-spacing:.01em}
     try { const x = new URL(u); if (IMG_HOSTS.includes(x.host)) x.host = IMG_HOST; return x.toString(); } catch (_) { return u; }
   }
   function isHostedImage(u) {
-    try { const x = new URL(u); return IMG_HOSTS.includes(x.host) && (/^\/(image|gif)\//.test(x.pathname) || /\.(png|jpe?g|gif|webp)$/i.test(x.pathname)); } catch (_) { return false; }
+    try { const x = new URL(u); return IMG_HOSTS.includes(x.host) && x.pathname.length > 1 && !/^\/song\//.test(x.pathname); } catch (_) { return false; }
   }
 
   function linkify(text, parent) {
