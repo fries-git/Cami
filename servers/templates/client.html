@@ -136,6 +136,55 @@ button{cursor:pointer}
 .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#292929;border:1px solid #444;border-radius:8px;padding:10px 14px;color:var(--text);display:none;max-width:min(90vw,500px);box-shadow:0 8px 30px #0005;z-index:20}
 .toast.show{display:block}
 
+/* ---- Polish ---- */
+:root{--bg:#111214;--panel:#16171a;--panel2:#1c1e22;--line:#25272c;--muted:#8b8f98;--accent:#ff9150}
+html{-webkit-font-smoothing:antialiased}
+body{background:var(--bg);letter-spacing:.01em}
+*{scrollbar-width:thin;scrollbar-color:#33363c transparent}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:#2f3238;border-radius:8px}
+::-webkit-scrollbar-track{background:transparent}
+.channel,.btn,.send,.online-item,.attach,.icon-btn,.profile{transition:background .15s,color .15s,transform .1s,box-shadow .15s,border-color .15s,filter .15s}
+.sidebar{background:linear-gradient(180deg,#17181b,#131416)}
+.brand{font-size:16px;letter-spacing:.8px}
+.brand-mark{width:12px;height:12px;border-radius:4px;background:linear-gradient(135deg,#ffb27a,#ff7a2e);box-shadow:0 0 14px #ff8c4266}
+.channel{border-radius:8px;padding:8px 10px}
+.channel:hover{background:#ffffff0a}
+.channel.active{background:#ff91501a;box-shadow:inset 3px 0 0 var(--accent)}
+.channel.active .cname{color:#ffd9bd}
+.profile{background:var(--panel2);border:1px solid var(--line);padding:8px}
+.profile:hover{background:#23262b}
+.online-item .av::after{content:"";position:absolute;right:-1px;bottom:-1px;width:7px;height:7px;border-radius:50%;background:var(--ok);border:2px solid #15161a;box-sizing:content-box;z-index:2}
+.topbar{background:#111214cc;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.channel-title{font-size:16px;font-weight:700;letter-spacing:.2px}
+.status{background:var(--panel2);border:1px solid var(--line);padding:5px 11px;border-radius:999px}
+.message{margin-inline:-10px;padding:2px 10px;border-radius:10px}
+.message:hover{background:#ffffff07}
+.message-actions{right:10px;top:2px;border:1px solid var(--line);background:var(--panel2);border-radius:6px;padding:1px 8px}
+.username{font-weight:650}
+.message-body{color:#e4e5e8;line-height:1.5}
+.day{margin:22px 0 6px;font-weight:600;letter-spacing:.4px}
+.message.new{animation:pop .2s ease-out}
+@keyframes pop{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.msg-img{border:1px solid var(--line);box-shadow:0 4px 18px #0004;border-radius:12px}
+.msg-img:hover{filter:brightness(1.08)}
+.empty strong{font-size:18px}
+.typing{font-style:italic}
+.composer{background:var(--panel2);border-color:var(--line);border-radius:14px;box-shadow:0 6px 24px #0003}
+.composer:focus-within{border-color:#ff915066;box-shadow:0 0 0 3px #ff91501f,0 6px 24px #0003}
+.send{border-radius:50%;width:36px;height:36px;box-shadow:0 2px 10px #ff915040}
+.send:active:not(:disabled){transform:scale(.92)}
+.attach{border-radius:50%;width:36px;height:36px}
+.overlay{backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.dialog{background:#1a1c1f;border-radius:16px;border-color:#2b2e33;box-shadow:0 24px 80px #000a}
+.dialog input[type=text],.dialog input[type=password],.dialog input:not([type]),.dialog textarea{background:#121315;border-color:#2b2e33;border-radius:8px;padding:11px}
+.btn{border-radius:8px;background:#24272c;border-color:#32353b}
+.btn:hover{background:#2c3037}
+.btn.primary,.btn.primary:hover{background:linear-gradient(180deg,#ff9d62,#ff8440);border-color:#ff8c4a}
+.btn.primary:hover{filter:brightness(1.07)}
+.toast{background:#23262b;border-color:#33363c;border-radius:10px}
+@media(max-width:620px){.profile{background:none;border-color:transparent}}
+
 @media(max-width:620px){
   .app{grid-template-columns:64px minmax(0,1fr)}
   .brand{padding:0;justify-content:center;font-size:0}
@@ -192,7 +241,7 @@ button{cursor:pointer}
         <textarea id="messageInput" rows="1" maxlength="4000" placeholder="Sign in to send messages…" disabled></textarea>
         <button class="send" id="sendButton" type="submit" disabled aria-label="Send message">↑</button>
       </form>
-      <div class="hint"><span>Enter to send · Shift+Enter for a new line</span><span>Min 5 characters</span></div>
+      <div class="hint"><span>Enter to send · Shift+Enter for a new line</span></div>
     </div>
   </main>
 </div>
@@ -269,7 +318,7 @@ button{cursor:pointer}
 (() => {
   const WS_URL = "wss://chat.barfpile.dev";
   const API = "https://cami.barfpile.dev";
-  const IMG_API = "https://images.barfpile.dev"; // image upload/hosting server
+  const IMG_API = "https://files.barfpile.dev"; // image upload/hosting server
   const IMG_HOST = new URL(IMG_API).host;
   const CHANNELS = ["general", "coding", "off-topic", "shitpost"];
   const GROUP_WINDOW = 5 * 60;
@@ -342,7 +391,7 @@ button{cursor:pointer}
   let pinned = true; // true while the view is at the bottom (keeps position as images load)
   function scrollDown() { list.scrollTop = list.scrollHeight; pinned = true; jump.classList.remove("show"); }
   function isHostedImage(u) {
-    try { const x = new URL(u); return x.host === IMG_HOST && /^\/(image|gif)\//.test(x.pathname); } catch (_) { return false; }
+    try { const x = new URL(u); return x.host === IMG_HOST && (/^\/(image|gif)\//.test(x.pathname) || /\.(png|jpe?g|gif|webp)$/i.test(x.pathname)); } catch (_) { return false; }
   }
 
   function linkify(text, parent) {
@@ -464,7 +513,7 @@ button{cursor:pointer}
     }
     if (m.channel === channel) {
       const stick = atBottom() || (userid && m.userid === userid);
-      appendMessage(m);
+      appendMessage(m); list.lastElementChild?.classList.add("new");
       if (stick) scrollDown(); else jump.classList.add("show");
     } else { unread[m.channel] = (unread[m.channel] || 0) + 1; renderSidebar(); }
   }
@@ -513,7 +562,7 @@ button{cursor:pointer}
   function requestOnline() { if (ws && ws.readyState === WebSocket.OPEN && authed) ws.send(JSON.stringify({ cmd: "getonline" })); }
 
   const typers = {}; // channel -> { username: expiresAt }
-  let lastTypingSent = 0;
+  let lastTypingSent = 0, lastSent = null;
   function renderTyping() {
     const now = Date.now(), t = typers[channel] || {};
     const names = Object.keys(t).filter(n => t[n] > now);
@@ -544,6 +593,9 @@ button{cursor:pointer}
       case "error":
         if (!authed) { failAuth(); return; }
         if (restorePending(str(d.message))) return;
+        // The server rejected the message (e.g. too short): give the text back so nothing is lost.
+        if (lastSent && Date.now() - lastSent.t < 4000 && !input.value) { input.value = lastSent.body; autosize(); }
+        lastSent = null;
         toast(str(d.message) || "Chat error"); return;
       case "new_message": return onNewMessage(d);
       case "delete_message": pendingDelete.delete(midOf(d)); return onDelete(d);
@@ -771,8 +823,7 @@ button{cursor:pointer}
   $("composer").addEventListener("submit", e => {
     e.preventDefault();
     const body = input.value.trim(); if (!body) return;
-    if (body.length < 5) return toast("Messages must be at least 5 characters.");
-    if (send({ cmd: "new_message", channel, body })) { input.value = ""; autosize(); input.focus(); }
+    if (send({ cmd: "new_message", channel, body })) { lastSent = { body, t: Date.now() }; input.value = ""; autosize(); input.focus(); }
   });
   function autosize() { input.style.height = "34px"; input.style.height = Math.min(input.scrollHeight, 160) + "px"; }
   input.addEventListener("input", () => {
