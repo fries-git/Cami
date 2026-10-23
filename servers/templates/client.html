@@ -395,6 +395,18 @@ body{background:var(--bg);letter-spacing:.01em}
   function normImg(u) {
     try { const x = new URL(u); if (IMG_HOSTS.includes(x.host)) x.host = IMG_HOST; return x.toString(); } catch (_) { return u; }
   }
+  // Try the link as written, then likely variants (with/without extension, /image/ vs /gif/).
+  function imgCandidates(src) {
+    const out = [src];
+    try {
+      const x = new URL(src), base = x.pathname.replace(/\.(png|gif|jpe?g|webp)$/i, "");
+      const alt = p => { const y = new URL(src); y.pathname = p; out.push(y.toString()); };
+      alt(base); alt(base + ".png"); alt(base + ".gif");
+      if (/^\/image\//.test(base)) { const g = base.replace(/^\/image\//, "/gif/"); alt(g + ".gif"); alt(g); }
+      if (/^\/gif\//.test(base)) { alt(base.replace(/^\/gif\//, "/image/")); }
+    } catch (_) {}
+    return [...new Set(out)];
+  }
   function isHostedImage(u) {
     try { const x = new URL(u); return IMG_HOSTS.includes(x.host) && x.pathname.length > 1 && !/^\/song\//.test(x.pathname); } catch (_) { return false; }
   }
@@ -408,8 +420,14 @@ body{background:var(--bg);letter-spacing:.01em}
         const src = normImg(m[1]); const a = document.createElement("a"); a.href = src; a.target = "_blank"; a.rel = "noopener noreferrer";
         const img = document.createElement("img"); img.className = "msg-img"; img.alt = "image"; img.loading = "lazy";
         img.onload = () => { if (pinned) list.scrollTop = list.scrollHeight; };
-        img.onerror = () => { a.replaceChildren(m[1]); };
-        img.src = src; a.append(img); parent.append(a);
+        const raw = m[1], tries = imgCandidates(src); let ti = 0;
+        img.onerror = () => {
+          ti++;
+          if (ti < tries.length) { img.src = tries[ti]; return; }
+          console.warn("Image failed to load, tried:", tries);
+          a.href = raw; a.replaceChildren(raw);
+        };
+        img.src = tries[0]; a.append(img); parent.append(a);
       } else if (m[1]) { const a = document.createElement("a"); a.href = m[1]; a.textContent = m[1]; a.target = "_blank"; a.rel = "noopener noreferrer nofollow"; parent.append(a); }
       else { const c = document.createElement("code"); c.textContent = m[2]; parent.append(c); }
       i = re.lastIndex;
@@ -889,13 +907,8 @@ body{background:var(--bg);letter-spacing:.01em}
       url = str(url).replace(/^"|"$/g, "").trim();
       if (!/^https?:\/\//.test(url)) throw new Error("Upload server returned no URL.");
       url = normImg(url);
-
-      if (/\/gif\//.test(url)) {
-        url = url.replace(/\.png(\?.*)?$/i, ".gif$1");
-      } else {
-        url = url.replace(/\.png(\?.*)?$/i, "$1");
-      }
-      const caption = input.value.trim();url = norm
+      if (/\/gif\//.test(url)) url = url.replace(/\.png(\?.*)?$/i, ".gif$1"); // server stores gifs as .gif
+      const caption = input.value.trim();
       if (send({ cmd: "new_message", channel, body: caption ? `${caption}\n${url}` : url })) { input.value = ""; autosize(); }
     } catch (e) { toast(e.message || "Upload failed."); }
     finally { uploading = false; $("attachBtn").disabled = !authed; renderTyping(); }
